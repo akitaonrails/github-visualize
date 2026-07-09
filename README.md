@@ -163,26 +163,35 @@ Notes for self-hosters:
     mitigating DNS-rebinding attacks against a no-auth LAN service.
 - Databases are migrated automatically on boot; repos re-sync every 30 minutes.
 
-### Homelab (openSUSE MicroOS) notes
+### Deploying your own server with bin/deploy
 
-One-command deploy:
+One-command SSH deploy for anyone hacking on this repo:
 
 ```bash
-bin/deploy    # tests + lint, build, push to Docker Hub, pull on server, compose up
+DEPLOY_HOST=user@your-server bin/deploy
 ```
 
-- Target: `akitaonrails@192.168.0.90`, stack root `/var/opt/docker/github-visualize/`,
-  port **7592** (override with `DEPLOY_HOST`/`DEPLOY_IMAGE`; `SKIP_CHECKS=1` skips tests).
-- The image goes through Docker Hub (`akitaonrails/github-visualize:latest`,
-  requires `docker login` locally); the server pulls it.
-- Uses `deploy/docker-compose.yml` on the server; only this stack's container is
-  (re)created — other stacks are untouched.
-- Server secrets live in `/var/opt/docker/github-visualize/.env`, seeded on the
-  first deploy from the local `GITHUB_TOKEN` with a generated `SECRET_KEY_BASE`;
-  never overwritten, never in git.
-- The bind mount must **not** use `:Z` — the compose file sets
-  `security_opt: label:disable` instead (SQLite + SELinux relabeling do not mix).
-- Container runs as uid 1000 (`rails`); `bin/deploy` chowns `storage/` accordingly.
+Configuration via env vars — or a gitignored `.deploy.env` in the repo root
+so you never retype them:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `DEPLOY_HOST` | *(required)* | SSH target |
+| `DEPLOY_IMAGE` | `akitaonrails/github-visualize:latest` | set to your registry account for forks (`docker login` required) |
+| `DEPLOY_DIR` | `/var/opt/docker/github-visualize` | stack dir on the server |
+| `DEPLOY_PORT` | `7592` | host port |
+| `SKIP_CHECKS=1` | — | skip tests + lint |
+
+The script builds and pushes the image, pulls it on the server, installs
+`deploy/docker-compose.yml`, seeds the server's `.env` on the **first** deploy
+only (generated `SECRET_KEY_BASE`; `GITHUB_TOKEN`, `GITHUB_OWNER`,
+`APP_TIME_ZONE`, `PORT` taken from your local environment) and waits for
+`/up`. Only this stack's container is (re)created — other stacks on the
+server are untouched. Secrets never enter the git repository.
+
+Notes: the bind mount must **not** use `:Z` on SELinux hosts — the compose
+file sets `security_opt: label:disable` instead; the container runs as
+uid 1000 (`rails`) and `bin/deploy` chowns `storage/` accordingly.
 
 ## CI
 

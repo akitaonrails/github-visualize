@@ -1,6 +1,7 @@
 # Ignore all environment files (keep templates)
 .env*
 !.env.example
+.deploy.env
 
 # Ignore bundler config and vendored gems
 /.bundle

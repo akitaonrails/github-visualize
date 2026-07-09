@@ -1,32 +1,40 @@
 #!/usr/bin/env bash
-# Deploy github-visualize to the homelab.
+# Deploy github-visualize to a self-hosted server over SSH.
 #
 # Usage:
-#   bin/deploy
+#   DEPLOY_HOST=user@server bin/deploy
 #
-# Environment overrides:
-#   DEPLOY_HOST=user@host   target server (default akitaonrails@192.168.0.90)
-#   SKIP_CHECKS=1           skip tests + lint before deploying
+# Configuration (env vars, or put them in a gitignored .deploy.env):
+#   DEPLOY_HOST    required — SSH target, e.g. user@192.168.0.90
+#   DEPLOY_IMAGE   image to build/push/pull (default akitaonrails/github-visualize:latest;
+#                  set to your own registry account when deploying a fork)
+#   DEPLOY_DIR     stack dir on the server (default /var/opt/docker/github-visualize)
+#   DEPLOY_PORT    host port on the server (default 7592)
+#   SKIP_CHECKS=1  skip tests + lint before deploying
 #
 # What it does:
 #   1. runs tests and rubocop (unless SKIP_CHECKS=1)
-#   2. builds the production image locally and pushes it to Docker Hub
+#   2. builds the production image locally and pushes it to the registry
 #      (requires `docker login`)
 #   3. pulls the image on the server
-#   4. installs deploy/docker-compose.yml into /var/opt/docker/github-visualize/
-#   5. seeds the server-side .env on FIRST deploy only (SECRET_KEY_BASE is
-#      generated; GITHUB_TOKEN is taken from the local environment) — secrets
-#      never touch this git repository
+#   4. installs deploy/docker-compose.yml into DEPLOY_DIR
+#   5. seeds DEPLOY_DIR/.env on FIRST deploy only (SECRET_KEY_BASE is
+#      generated; GITHUB_TOKEN/GITHUB_OWNER/APP_TIME_ZONE/PORT come from
+#      the local environment) — secrets never touch this git repository
 #   6. docker compose up -d (recreates only this stack's container) and
 #      waits for /up to go green
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-HOST="${DEPLOY_HOST:-akitaonrails@192.168.0.90}"
-STACK_DIR="/var/opt/docker/github-visualize"
+# Local, gitignored per-developer defaults (e.g. DEPLOY_HOST=...)
+[ -f .deploy.env ] && source .deploy.env
+
+: "${DEPLOY_HOST:?set DEPLOY_HOST=user@server (or put it in .deploy.env)}"
+HOST="${DEPLOY_HOST}"
+STACK_DIR="${DEPLOY_DIR:-/var/opt/docker/github-visualize}"
 IMAGE="${DEPLOY_IMAGE:-akitaonrails/github-visualize:latest}"
-PORT=7592
+PORT="${DEPLOY_PORT:-7592}"
 
 if [ -z "${SKIP_CHECKS:-}" ]; then
   echo "==> Tests + lint"
@@ -37,30 +45,35 @@ fi
 echo "==> Building ${IMAGE}"
 docker build -t "${IMAGE}" .
 
-echo "==> Pushing ${IMAGE} to Docker Hub"
+echo "==> Pushing ${IMAGE}"
 docker push "${IMAGE}"
 
 echo "==> Pulling image on ${HOST}"
 ssh "${HOST}" "docker pull ${IMAGE}"
 
 echo "==> Preparing ${STACK_DIR}"
-ssh "${HOST}" "mkdir -p ${STACK_DIR}/storage && sudo chown -R 1000:1000 ${STACK_DIR}/storage"
+ssh "${HOST}" "mkdir -p ${STACK_DIR}/storage && { chown -R 1000:1000 ${STACK_DIR}/storage 2>/dev/null || sudo chown -R 1000:1000 ${STACK_DIR}/storage; }"
 scp -q deploy/docker-compose.yml "${HOST}:${STACK_DIR}/docker-compose.yml"
 
 if ! ssh "${HOST}" "test -f ${STACK_DIR}/.env"; then
   echo "==> Seeding ${STACK_DIR}/.env (first deploy only)"
   : "${GITHUB_TOKEN:?GITHUB_TOKEN must be set locally to seed the server .env}"
-  printf 'SECRET_KEY_BASE=%s\nGITHUB_TOKEN=%s\n' "$(openssl rand -hex 64)" "${GITHUB_TOKEN}" |
-    ssh "${HOST}" "umask 177 && cat > ${STACK_DIR}/.env"
+  {
+    printf 'SECRET_KEY_BASE=%s\n' "$(openssl rand -hex 64)"
+    printf 'GITHUB_TOKEN=%s\n' "${GITHUB_TOKEN}"
+    printf 'GITHUB_OWNER=%s\n' "${GITHUB_OWNER:-}"
+    printf 'APP_TIME_ZONE=%s\n' "${APP_TIME_ZONE:-UTC}"
+    printf 'PORT=%s\n' "${PORT}"
+  } | ssh "${HOST}" "umask 177 && cat > ${STACK_DIR}/.env"
 fi
 
 echo "==> Starting stack"
-ssh "${HOST}" "cd ${STACK_DIR} && docker compose up -d"
+ssh "${HOST}" "cd ${STACK_DIR} && GV_IMAGE=${IMAGE} docker compose up -d"
 
 echo "==> Waiting for health check"
 for _ in $(seq 1 30); do
   if ssh "${HOST}" "curl -sf -o /dev/null http://localhost:${PORT}/up"; then
-    echo "==> Deployed: http://192.168.0.90:${PORT}/"
+    echo "==> Deployed: http://${HOST#*@}:${PORT}/"
     exit 0
   fi
   sleep 2

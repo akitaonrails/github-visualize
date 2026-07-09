@@ -1,32 +1,26 @@
-# Server compose for the homelab (installed by bin/deploy to
-# /var/opt/docker/github-visualize/). bin/deploy pushes the image to
-# Docker Hub and pulls it here.
-#
-# Secrets live in .env next to this file on the server (SECRET_KEY_BASE,
-# GITHUB_TOKEN); bin/deploy seeds it on first deploy and never overwrites it.
+# Server compose installed by bin/deploy (see its header for configuration).
+# Secrets and per-server settings live in .env next to this file on the
+# server; bin/deploy seeds it on first deploy and never overwrites it.
 
 name: github_visualize
 
 services:
   github-visualize:
-    image: akitaonrails/github-visualize:latest
+    image: ${GV_IMAGE:-akitaonrails/github-visualize:latest}
     container_name: github-visualize
     restart: always
     # The image's non-root user; ./storage is chown'd to match by bin/deploy
     user: "1000:1000"
-    # MicroOS SELinux: never use :Z on bind mounts (breaks SQLite)
+    # SELinux hosts (MicroOS/Fedora): never use :Z on bind mounts (breaks SQLite)
     security_opt:
       - label:disable
     ports:
-      - "7592:80"
+      - "${PORT:-7592}:80"
     volumes:
       - ./storage:/rails/storage
     env_file: .env
     environment:
       - SOLID_QUEUE_IN_PUMA=1
-      - APP_TIME_ZONE=America/Sao_Paulo
-      # Bare repo names in the add form are scoped to this owner
-      - GITHUB_OWNER=${GITHUB_OWNER:-akitaonrails}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/up"]
       interval: 30s
