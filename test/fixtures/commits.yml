@@ -1,0 +1,35 @@
+first:
+  repository: ai_memory
+  sha: aaa1111111111111111111111111111111111111
+  message: Initial commit
+  author_login: akitaonrails
+  committed_at: <%= 10.days.ago.change(hour: 9) %>
+  additions: 100
+  deletions: 0
+
+second:
+  repository: ai_memory
+  sha: bbb2222222222222222222222222222222222222
+  message: Add memory consolidation pipeline
+  author_login: akitaonrails
+  committed_at: <%= 5.days.ago.change(hour: 14) %>
+  additions: 250
+  deletions: 40
+
+third:
+  repository: ai_memory
+  sha: ccc3333333333333333333333333333333333333
+  message: Fix handoff race condition
+  author_login: akitaonrails
+  committed_at: <%= 5.days.ago.change(hour: 14, min: 30) %>
+  additions: 30
+  deletions: 12
+
+recent:
+  repository: ai_memory
+  sha: ddd4444444444444444444444444444444444444
+  message: Tune retrieval ranking
+  author_login: akitaonrails
+  committed_at: <%= 1.day.ago.change(hour: 22) %>
+  additions: 60
+  deletions: 8

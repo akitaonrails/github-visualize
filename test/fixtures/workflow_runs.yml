@@ -1,0 +1,29 @@
+ci_old_failure:
+  repository: ai_memory
+  github_id: 1001
+  workflow_name: ci
+  run_number: 1
+  status: completed
+  conclusion: failure
+  branch: main
+  run_started_at: <%= 6.days.ago %>
+
+ci_latest_success:
+  repository: ai_memory
+  github_id: 1002
+  workflow_name: ci
+  run_number: 2
+  status: completed
+  conclusion: success
+  branch: main
+  run_started_at: <%= 1.day.ago %>
+
+release_latest_failure:
+  repository: ai_memory
+  github_id: 1003
+  workflow_name: release
+  run_number: 7
+  status: completed
+  conclusion: failure
+  branch: main
+  run_started_at: <%= 2.days.ago %>

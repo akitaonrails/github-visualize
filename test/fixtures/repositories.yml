@@ -1,0 +1,12 @@
+ai_memory:
+  owner: akitaonrails
+  name: ai-memory
+  default_branch: main
+  description: Long term memory for coding agents
+  sync_status: synced
+  last_synced_at: <%= 10.minutes.ago %>
+
+frank_go:
+  owner: akitaonrails
+  name: frank_go
+  sync_status: pending
