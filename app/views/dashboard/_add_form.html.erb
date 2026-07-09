@@ -1,7 +1,7 @@
 <%= form_with url: repositories_path, method: :post, id: "add-repo-form", class: "flex gap-2 items-start" do |form| %>
   <div class="relative" data-controller="autocomplete" data-autocomplete-url-value="<%= suggestions_path %>">
     <%= form.text_field :full_name,
-          placeholder: ENV["GITHUB_OWNER"].present? ? "repository (or owner/repo)" : "owner/repository",
+          placeholder: Repository.default_owner ? "repository (or owner/repo)" : "owner/repository",
           autocomplete: "off",
           data: { autocomplete_target: "input",
                   action: "input->autocomplete#search focus->autocomplete#search keydown->autocomplete#navigate" },

@@ -12,19 +12,13 @@ class Repository < ApplicationRecord
                    uniqueness: { scope: :owner, case_sensitive: false }
   validates :sync_status, inclusion: { in: SYNC_STATUSES }
 
-  scope :alphabetical, -> { order(:owner, :name) }
-
-  def self.find_by_full_name!(full_name)
-    owner, name = full_name.to_s.split("/", 2)
-    find_by!(owner: owner, name: name)
+  # Owner used for bare repo names in the add form and its autocomplete.
+  def self.default_owner
+    ENV["GITHUB_OWNER"].presence
   end
 
   def full_name
     "#{owner}/#{name}"
-  end
-
-  def to_param
-    full_name
   end
 
   def github_url

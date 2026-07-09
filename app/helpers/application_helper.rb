@@ -21,7 +21,7 @@ module ApplicationHelper
 
   # Owner shown next to the app title: GITHUB_OWNER, or the token's login.
   def configured_github_owner
-    ENV["GITHUB_OWNER"].presence || token_login
+    Repository.default_owner || token_login
   end
 
   def token_login

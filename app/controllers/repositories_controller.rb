@@ -15,7 +15,7 @@ class RepositoriesController < ApplicationController
   # Turbo submissions update the dashboard in place instead of navigating.
   def create
     input = params.expect(:full_name).strip
-    owner, name = input.include?("/") ? input.split("/", 2) : [ ENV["GITHUB_OWNER"], input ]
+    owner, name = input.include?("/") ? input.split("/", 2) : [ Repository.default_owner, input ]
     repository = Repository.new(owner: owner&.strip, name: name&.strip)
 
     if repository.save
