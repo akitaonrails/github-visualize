@@ -8,7 +8,7 @@
     <% max_commits = repositories.map { |repository| overview.for(repository).total_commits }.max %>
 
     <section class="mt-10">
-      <p class="text-xs text-neutral-500 uppercase tracking-widest mb-3">+ commits land per repo</p>
+      <p class="text-xs text-neutral-500 uppercase tracking-widest mb-3">+ commits land per repo <span class="text-neutral-700 normal-case tracking-normal">(log scale)</span></p>
       <div class="space-y-1.5">
         <% bar_colors = %w[bg-fuchsia-500 bg-orange-400 bg-cyan-400 bg-emerald-400 bg-pink-500 bg-violet-500 bg-amber-300 bg-sky-400] %>
         <% repositories.sort_by { |repository| -overview.for(repository).total_commits }.each_with_index do |repository, index| %>
