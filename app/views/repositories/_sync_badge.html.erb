@@ -1,0 +1,12 @@
+<%# locals: (repository:, size: "sm", show_last_synced: false) %>
+<span class="border rounded-full <%= size == "md" ? "px-2 py-1" : "px-2 py-0.5" %> <%= sync_status_class(repository.sync_status) %>"
+      data-controller="sync-status"
+      data-sync-status-url-value="<%= repository_sync_status_path(owner: repository.owner, name: repository.name) %>"
+      data-sync-status-state-value="<%= repository.sync_status %>">
+  <span data-sync-status-target="badge"><%= repository.sync_status %></span><span data-sync-status-target="progress"><%=
+    if repository.sync_progress.present?
+      " · #{repository.sync_progress}"
+    elsif show_last_synced && repository.last_synced_at
+      " · #{time_ago_in_words(repository.last_synced_at)} ago"
+    end %></span>
+</span>
