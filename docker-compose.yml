@@ -13,9 +13,9 @@
 
 services:
   github-visualize:
-    build: .
-    # Or pull from the local Gitea registry:
-    # image: 192.168.0.90:3007/akitaonrails/github-visualize:latest
+    image: akitaonrails/github-visualize:latest
+    # Or build from a checkout of the repo:
+    # build: .
     container_name: github-visualize
     restart: unless-stopped
     user: "${UID:-1000}:${GID:-1000}"

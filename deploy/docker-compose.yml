@@ -1,6 +1,6 @@
 # Server compose for the homelab (installed by bin/deploy to
-# /var/opt/docker/github-visualize/). The image is shipped with
-# docker save | docker load — no registry involved.
+# /var/opt/docker/github-visualize/). bin/deploy pushes the image to
+# Docker Hub and pulls it here.
 #
 # Secrets live in .env next to this file on the server (SECRET_KEY_BASE,
 # GITHUB_TOKEN); bin/deploy seeds it on first deploy and never overwrites it.
@@ -9,7 +9,7 @@ name: github_visualize
 
 services:
   github-visualize:
-    image: github-visualize:latest
+    image: akitaonrails/github-visualize:latest
     container_name: github-visualize
     restart: always
     # The image's non-root user; ./storage is chown'd to match by bin/deploy

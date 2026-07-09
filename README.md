@@ -66,29 +66,95 @@ SyncRepositoryJob.perform_now(repo)
 
 In development, run queued jobs with `bin/jobs` (or inline via the console as above).
 
-## Docker
+## Quick start — run from the public Docker image
+
+The image is published as
+[`akitaonrails/github-visualize`](https://hub.docker.com/r/akitaonrails/github-visualize)
+(single container: Thruster + Puma with the Solid Queue job supervisor
+in-process; SQLite persisted in a volume — no external database or Redis).
+
+Fastest possible try-out:
 
 ```bash
-echo "SECRET_KEY_BASE=$(openssl rand -hex 64)" >> .env
-echo "GITHUB_TOKEN=ghp_..." >> .env
-docker compose up -d --build
+docker run -d --name github-visualize -p 7592:80 \
+  -e SECRET_KEY_BASE="$(openssl rand -hex 64)" \
+  -e GITHUB_TOKEN="ghp_your_token" \
+  -e GITHUB_OWNER="your-github-username" \
+  -e SOLID_QUEUE_IN_PUMA=1 \
+  -v ./storage:/rails/storage \
+  akitaonrails/github-visualize:latest
 # http://localhost:7592
 ```
 
-Single container: Thruster + Puma with the Solid Queue supervisor running
-in-process (`SOLID_QUEUE_IN_PUMA=1`). SQLite databases (app, cache, queue)
-persist in the `storage/` volume. Healthcheck hits `/up`.
+### Self-hosted server with docker compose
+
+Create a directory on your server with a `.env` file (never commit it):
+
+```bash
+mkdir -p github-visualize/storage && cd github-visualize
+cat > .env <<EOF
+SECRET_KEY_BASE=$(openssl rand -hex 64)
+GITHUB_TOKEN=ghp_your_token
+EOF
+chmod 600 .env
+```
+
+And a `docker-compose.yml`:
+
+```yaml
+services:
+  github-visualize:
+    image: akitaonrails/github-visualize:latest
+    container_name: github-visualize
+    restart: unless-stopped
+    user: "1000:1000"            # the image's non-root user
+    ports:
+      - "7592:80"
+    volumes:
+      - ./storage:/rails/storage # SQLite databases live here
+    env_file: .env
+    environment:
+      - SOLID_QUEUE_IN_PUMA=1                  # background sync inside Puma
+      - GITHUB_OWNER=your-github-username     # bare names in the add form
+      - APP_TIME_ZONE=America/Sao_Paulo       # chart day/hour bucketing
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/up"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+```
+
+Then:
+
+```bash
+chown -R 1000:1000 storage   # container runs as uid 1000
+docker compose up -d
+```
+
+Notes for self-hosters:
+
+- `GITHUB_TOKEN` needs read access to the repos you want to monitor; a
+  fine-grained token with **Contents: read** and **Actions: read** is enough.
+  Private repos work as long as the token can read them.
+- On SELinux hosts (Fedora/openSUSE MicroOS), do **not** add `:Z` to the bind
+  mount — it breaks SQLite. Add `security_opt: ["label:disable"]` instead.
+- There is no authentication in v1 — keep it on a trusted network (LAN, VPN,
+  or behind an authenticating proxy/tunnel).
+- Databases are migrated automatically on boot; repos re-sync every 30 minutes.
 
 ### Homelab (openSUSE MicroOS) notes
 
 One-command deploy:
 
 ```bash
-bin/deploy    # tests + lint, build, ship via docker save|load, compose up, health check
+bin/deploy    # tests + lint, build, push to Docker Hub, pull on server, compose up
 ```
 
 - Target: `akitaonrails@192.168.0.90`, stack root `/var/opt/docker/github-visualize/`,
-  port **7592** (override with `DEPLOY_HOST`; `SKIP_CHECKS=1` skips tests).
+  port **7592** (override with `DEPLOY_HOST`/`DEPLOY_IMAGE`; `SKIP_CHECKS=1` skips tests).
+- The image goes through Docker Hub (`akitaonrails/github-visualize:latest`,
+  requires `docker login` locally); the server pulls it.
 - Uses `deploy/docker-compose.yml` on the server; only this stack's container is
   (re)created — other stacks are untouched.
 - Server secrets live in `/var/opt/docker/github-visualize/.env`, seeded on the

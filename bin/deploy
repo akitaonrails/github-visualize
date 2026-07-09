@@ -10,8 +10,9 @@
 #
 # What it does:
 #   1. runs tests and rubocop (unless SKIP_CHECKS=1)
-#   2. builds the production image locally
-#   3. ships it over SSH with docker save | docker load (no registry needed)
+#   2. builds the production image locally and pushes it to Docker Hub
+#      (requires `docker login`)
+#   3. pulls the image on the server
 #   4. installs deploy/docker-compose.yml into /var/opt/docker/github-visualize/
 #   5. seeds the server-side .env on FIRST deploy only (SECRET_KEY_BASE is
 #      generated; GITHUB_TOKEN is taken from the local environment) — secrets
@@ -24,7 +25,7 @@ cd "$(dirname "$0")/.."
 
 HOST="${DEPLOY_HOST:-akitaonrails@192.168.0.90}"
 STACK_DIR="/var/opt/docker/github-visualize"
-IMAGE="github-visualize:latest"
+IMAGE="${DEPLOY_IMAGE:-akitaonrails/github-visualize:latest}"
 PORT=7592
 
 if [ -z "${SKIP_CHECKS:-}" ]; then
@@ -36,8 +37,11 @@ fi
 echo "==> Building ${IMAGE}"
 docker build -t "${IMAGE}" .
 
-echo "==> Shipping image to ${HOST} (a few minutes on first deploy)"
-docker save "${IMAGE}" | gzip | ssh "${HOST}" 'gunzip | docker load'
+echo "==> Pushing ${IMAGE} to Docker Hub"
+docker push "${IMAGE}"
+
+echo "==> Pulling image on ${HOST}"
+ssh "${HOST}" "docker pull ${IMAGE}"
 
 echo "==> Preparing ${STACK_DIR}"
 ssh "${HOST}" "mkdir -p ${STACK_DIR}/storage && sudo chown -R 1000:1000 ${STACK_DIR}/storage"
