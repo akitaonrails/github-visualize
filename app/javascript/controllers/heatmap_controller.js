@@ -1,8 +1,9 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Day-by-hour commit heatmap with a chronological reveal animation.
+// Day-by-hour commit heatmap. Cells fade in hour by hour in chronological
+// order, with the commit counter climbing in sync with the reveal.
 export default class extends Controller {
-  static targets = ["canvas"]
+  static targets = ["canvas", "counter"]
   static values = { data: Object }
 
   // Keep in sync with ApplicationHelper::HEAT_STOPS.
@@ -11,7 +12,11 @@ export default class extends Controller {
     [236, 72, 153], [249, 115, 22], [250, 204, 21]
   ]
 
+  // How many cells are fading in at any moment during the sweep.
+  static fadeSpan = 30
+
   connect() {
+    this.numberFormat = new Intl.NumberFormat()
     this.resize = () => this.draw(this.progress ?? 1)
     window.addEventListener("resize", this.resize)
     this.replay()
@@ -29,7 +34,7 @@ export default class extends Controller {
       this.draw(1)
       return
     }
-    const duration = 2200
+    const duration = 3000
     const start = performance.now()
     const tick = (now) => {
       this.progress = Math.min((now - start) / duration, 1)
@@ -67,7 +72,10 @@ export default class extends Controller {
     }
 
     const totalCells = rows.length * 24
-    const visibleCells = Math.ceil(totalCells * progress)
+    const fadeSpan = this.constructor.fadeSpan
+    // The sweep runs past totalCells by fadeSpan so the last cells finish fading.
+    const sweep = progress * (totalCells + fadeSpan)
+    let revealedCommits = 0
 
     rows.forEach((row, rowIndex) => {
       const y = headerHeight + rowIndex * (cellHeight + gap)
@@ -75,13 +83,27 @@ export default class extends Controller {
       ctx.fillText(row.label, 0, y + cellHeight - 3)
 
       row.counts.forEach((count, hour) => {
-        if (rowIndex * 24 + hour >= visibleCells) return
+        const index = rowIndex * 24 + hour
+        const alpha = Math.min(Math.max((sweep - index) / fadeSpan, 0), 1)
+        if (alpha <= 0) return
+        if (alpha >= 0.5) revealedCommits += count
+
+        ctx.globalAlpha = alpha
         ctx.fillStyle = this.heatColor(count, max)
         ctx.beginPath()
         ctx.roundRect(labelWidth + hour * (cellWidth + gap), y, cellWidth, cellHeight, 2)
         ctx.fill()
+        ctx.globalAlpha = 1
       })
     })
+
+    this.updateCounter(progress, revealedCommits)
+  }
+
+  updateCounter(progress, revealedCommits) {
+    if (!this.hasCounterTarget) return
+    const total = this.dataValue.total ?? 0
+    this.counterTarget.textContent = this.numberFormat.format(progress >= 1 ? total : revealedCommits)
   }
 
   hourLabel(hour) {

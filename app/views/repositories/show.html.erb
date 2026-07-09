@@ -81,7 +81,7 @@
         <p class="text-xs text-neutral-500 uppercase tracking-widest mb-1">
           last <%= Visualizations::CommitHeatmap::WINDOW_DAYS %> days · 24 hours · <%= Time.zone.name %>
         </p>
-        <p class="text-3xl font-bold text-neutral-50"><%= number_with_delimiter(@heatmap[:total]) %> commits</p>
+        <p class="text-3xl font-bold text-neutral-50"><span data-heatmap-target="counter"><%= number_with_delimiter(@heatmap[:total]) %></span> commits</p>
       </div>
       <div class="flex items-center gap-3">
         <span class="text-xs text-neutral-500">1</span>
