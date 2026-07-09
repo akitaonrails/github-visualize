@@ -10,6 +10,7 @@ class SuggestionsController < ApplicationController
       .reject { |repo| monitored.include?(repo[:full_name].downcase) }
       .select { |repo| matches?(repo, query) }
       .first(LIMIT)
+      .map { |repo| repo.merge(display_name: display_name(repo)) }
 
     render json: suggestions
   rescue Github::Client::Error
@@ -25,6 +26,11 @@ class SuggestionsController < ApplicationController
 
     owner, name = repo[:full_name].downcase.split("/", 2)
     name.include?(query.delete_prefix("#{owner}/"))
+  end
+
+  def display_name(repo)
+    owner, name = repo[:full_name].split("/", 2)
+    owner == Repository.default_owner ? name : repo[:full_name]
   end
 
   def user_repositories

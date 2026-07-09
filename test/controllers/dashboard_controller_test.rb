@@ -31,6 +31,30 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "repos owned by the configured owner render bare names" do
+    ENV["GITHUB_OWNER"] = "akitaonrails"
+    get root_url
+
+    assert_select "a", text: "ai-memory"
+    assert_select "a", text: "akitaonrails/ai-memory", count: 0
+  ensure
+    ENV.delete("GITHUB_OWNER")
+  end
+
+  test "commit bars collapse beyond the top 3" do
+    3.times { |i| Repository.create!(owner: "akitaonrails", name: "extra-#{i}") }
+    get root_url
+
+    assert_match "… show all 5 repos", response.body
+    assert_match "data-reveal-target=\"content\"", response.body
+  end
+
+  test "commit bars carry both scale widths for the toggle" do
+    get root_url
+    assert_match "data-linear-width", response.body
+    assert_match "data-log-width", response.body
+  end
+
   test "header shows the configured owner" do
     ENV["GITHUB_OWNER"] = "akitaonrails"
     get root_url

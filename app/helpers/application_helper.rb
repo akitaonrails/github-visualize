@@ -24,6 +24,12 @@ module ApplicationHelper
     Repository.default_owner || token_login
   end
 
+  # The owner is already scoped app-wide (header badge), so repos belonging
+  # to it render as bare names; foreign repos keep the owner/ prefix.
+  def repository_display_name(repository)
+    repository.owner == configured_github_owner ? repository.name : repository.full_name
+  end
+
   def token_login
     return if ENV["GITHUB_TOKEN"].blank?
 

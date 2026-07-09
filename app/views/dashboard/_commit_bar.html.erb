@@ -1,0 +1,15 @@
+<%# locals: (repository:, stats:, index:, max_commits:) %>
+<% bar_colors = %w[bg-fuchsia-500 bg-orange-400 bg-cyan-400 bg-emerald-400 bg-pink-500 bg-violet-500 bg-amber-300 bg-sky-400] %>
+<div class="flex items-center gap-3 text-sm">
+  <%= link_to repository_display_name(repository), repository_path(owner: repository.owner, name: repository.name),
+        class: "w-64 truncate text-neutral-300 hover:text-white" %>
+  <div class="flex-1 h-3 bg-neutral-900 rounded-sm overflow-hidden">
+    <%# log scale by default (one huge repo would otherwise flatten the rest); linear width kept for the toggle %>
+    <% log_width = max_commits.zero? || stats.total_commits.zero? ? 0 : (Math.log(1 + stats.total_commits) * 100.0 / Math.log(1 + max_commits)).round(1) %>
+    <% linear_width = max_commits.zero? || stats.total_commits.zero? ? 0 : (stats.total_commits * 100.0 / max_commits).clamp(1, 100).round(1) %>
+    <div class="h-full rounded-sm <%= bar_colors[index % bar_colors.size] %>"
+         data-bar-scale-target="bar" data-log-width="<%= log_width %>%" data-linear-width="<%= linear_width %>%"
+         style="width: <%= log_width %>%"></div>
+  </div>
+  <span class="w-16 text-right text-neutral-400"><%= number_with_delimiter(stats.total_commits) %></span>
+</div>

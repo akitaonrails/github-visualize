@@ -28,6 +28,23 @@ class SuggestionsControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes names, "akitaonrails/frank_mega" # doesn't match query
   end
 
+  test "display_name drops the prefix for the configured owner" do
+    ENV["GITHUB_OWNER"] = "akitaonrails"
+    stub_request(:get, %r{https://api\.github\.com/user/repos})
+      .to_return(status: 200, headers: github_headers, body: [
+        { full_name: "akitaonrails/ai-jail", description: nil, private: false },
+        { full_name: "someoneelse/ai-tool", description: nil, private: false }
+      ].to_json)
+
+    get suggestions_url(q: "ai")
+
+    display_names = response.parsed_body.map { |repo| repo["display_name"] }
+    assert_includes display_names, "ai-jail"
+    assert_includes display_names, "someoneelse/ai-tool"
+  ensure
+    ENV.delete("GITHUB_OWNER")
+  end
+
   test "index returns empty list when GitHub errors" do
     stub_request(:get, %r{https://api\.github\.com/user/repos}).to_return(status: 500)
 

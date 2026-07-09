@@ -52,7 +52,7 @@ export default class extends Controller {
 
         const name = document.createElement("span")
         name.className = "text-neutral-200"
-        name.textContent = repo.full_name
+        name.textContent = repo.display_name || repo.full_name
 
         item.append(name)
         if (repo.private) {

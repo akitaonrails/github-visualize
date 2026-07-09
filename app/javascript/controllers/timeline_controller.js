@@ -3,13 +3,22 @@ import PlaybackController from "lib/playback_controller"
 // Commit timeline replay: additions (pink) and deletions (cyan) per bucket,
 // with counters and a scrolling commit log, like the Bun post's git log chart.
 export default class extends PlaybackController {
-  static targets = ["canvas", "commits", "lines", "deleted", "log"]
+  static targets = ["canvas", "commits", "lines", "deleted", "log", "scaleLabel"]
   static values = { data: Object }
   static duration = 4000
 
   connect() {
     this.numberFormat = new Intl.NumberFormat()
+    this.logScale = true
     super.connect()
+  }
+
+  toggleScale() {
+    this.logScale = !this.logScale
+    if (this.hasScaleLabelTarget) {
+      this.scaleLabelTarget.textContent = this.logScale ? "(log scale)" : "(linear scale)"
+    }
+    this.render(this.progress ?? 1)
   }
 
   render(progress) {
@@ -49,10 +58,11 @@ export default class extends PlaybackController {
       if (total === 0) return
 
       const x = index * barWidth
-      // Bar height is log-scaled (one huge day would otherwise flatten every
-      // other bar), but the pink/cyan split inside each bar stays linear so
-      // the added/deleted ratio reads true.
-      const barHeight = (Math.log1p(total) / Math.log1p(maxLines)) * (height - 8)
+      // Log scale by default (one huge day would otherwise flatten every
+      // other bar; toggleable), while the pink/cyan split inside each bar
+      // stays linear so the added/deleted ratio reads true.
+      const ratio = this.logScale ? Math.log1p(total) / Math.log1p(maxLines) : total / maxLines
+      const barHeight = ratio * (height - 8)
       const deletionsHeight = barHeight * (bucket.deletions / total)
       const barPixelWidth = Math.max(barWidth - 1, 1)
 
