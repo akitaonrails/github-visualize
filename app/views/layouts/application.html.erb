@@ -26,16 +26,9 @@
       </div>
     </header>
 
-    <% if notice.present? || alert.present? %>
-      <div class="container mx-auto max-w-6xl px-5 pt-4">
-        <% if notice.present? %>
-          <p class="text-sm text-emerald-300 border border-emerald-900 bg-emerald-950/40 rounded px-3 py-2"><%= notice %></p>
-        <% end %>
-        <% if alert.present? %>
-          <p class="text-sm text-red-300 border border-red-900 bg-red-950/40 rounded px-3 py-2"><%= alert %></p>
-        <% end %>
-      </div>
-    <% end %>
+    <div id="flash" class="container mx-auto max-w-6xl px-5">
+      <%= render "shared/flash", notice: notice, alert: alert %>
+    </div>
 
     <main class="container mx-auto max-w-6xl px-5 py-8">
       <%= yield %>

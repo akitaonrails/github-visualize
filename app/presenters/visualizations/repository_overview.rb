@@ -15,6 +15,20 @@ module Visualizations
       stats_by_repository_id.fetch(repository.id)
     end
 
+    # Sorts by "key_direction" (name/created/updated + asc/desc); "updated"
+    # means the latest synced commit, falling back to when the repo was added.
+    def sorted(sort)
+      key, direction = sort.split("_")
+      ordered = @repositories.sort_by do |repository|
+        case key
+        when "name" then repository.full_name.downcase
+        when "created" then repository.created_at
+        else self.for(repository).last_committed_at || repository.created_at
+        end
+      end
+      direction == "desc" ? ordered.reverse : ordered
+    end
+
     def chip_dates
       @chip_dates ||= ((CHIP_DAYS - 1).days.ago.to_date..Date.current).to_a
     end

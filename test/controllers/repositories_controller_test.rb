@@ -35,7 +35,20 @@ class RepositoriesControllerTest < ActionDispatch::IntegrationTest
       end
     end
 
-    assert_redirected_to repository_url(owner: "akitaonrails", name: "easy-ffmpeg")
+    assert_redirected_to root_url
+  end
+
+  test "create over turbo stream updates the dashboard in place" do
+    assert_difference "Repository.count", 1 do
+      post repositories_url, params: { full_name: "akitaonrails/easy-ffmpeg" },
+                             headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    end
+
+    assert_response :success
+    assert_match "turbo-stream", response.body
+    assert_match "dashboard-content", response.body
+    assert_match "akitaonrails/easy-ffmpeg", response.body
+    assert_match %(target="repo-count"), response.body
   end
 
   test "create scopes bare names to GITHUB_OWNER" do
@@ -45,7 +58,7 @@ class RepositoriesControllerTest < ActionDispatch::IntegrationTest
       post repositories_url, params: { full_name: "easy-subtitle" }
     end
 
-    assert_redirected_to repository_url(owner: "akitaonrails", name: "easy-subtitle")
+    assert_redirected_to root_url
   ensure
     ENV.delete("GITHUB_OWNER")
   end

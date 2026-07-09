@@ -82,7 +82,8 @@ export default class extends Controller {
 
     buckets.forEach((bucket, index) => {
       const x = index * barWidth
-      const scale = (value) => Math.sqrt(value / maxLines) * (height - 8)
+      // Log scale: one huge day would otherwise flatten every other bar.
+      const scale = (value) => (Math.log1p(value) / Math.log1p(maxLines)) * (height - 8)
       const additionsHeight = scale(bucket.additions)
       const deletionsHeight = scale(bucket.deletions)
 

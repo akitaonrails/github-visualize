@@ -1,0 +1,35 @@
+<div class="border border-neutral-800 rounded-lg p-4 bg-neutral-950/60 hover:border-neutral-700">
+  <div class="flex items-start justify-between gap-2">
+    <div class="min-w-0">
+      <%= link_to repository.full_name, repository_path(owner: repository.owner, name: repository.name),
+            class: "text-neutral-100 hover:text-fuchsia-300 font-semibold truncate block" %>
+      <p class="text-xs text-neutral-500 truncate mt-0.5"><%= repository.description %></p>
+    </div>
+    <span class="shrink-0 inline-block w-2.5 h-2.5 rounded-full mt-1.5 <%= ci_dot_class(stats.ci_conclusion) %>"
+          title="latest CI: <%= stats.ci_conclusion || "no runs" %>"></span>
+  </div>
+
+  <div class="flex gap-[3px] mt-4" title="commits per day, last <%= chip_days %> days">
+    <% stats.daily_counts.each do |count| %>
+      <span class="h-4 flex-1 rounded-[2px]" style="background-color: <%= heat_color(count, stats.max_daily) %>"></span>
+    <% end %>
+  </div>
+
+  <p class="text-[11px] text-neutral-600 mt-2">
+    last commit: <%= stats.last_committed_at ? "#{time_ago_in_words(stats.last_committed_at)} ago" : "none synced" %>
+  </p>
+
+  <div class="flex items-center justify-between mt-3 text-xs">
+    <span class="text-neutral-400">
+      <%= number_with_delimiter(stats.total_commits) %> commits
+      <span class="text-pink-400">+<%= number_with_delimiter(stats.total_additions) %></span>
+      <span class="text-cyan-400">-<%= number_with_delimiter(stats.total_deletions) %></span>
+    </span>
+    <span class="border rounded-full px-2 py-0.5 <%= sync_status_class(repository.sync_status) %>"
+          data-controller="sync-status"
+          data-sync-status-url-value="<%= repository_sync_status_path(owner: repository.owner, name: repository.name) %>"
+          data-sync-status-state-value="<%= repository.sync_status %>">
+      <span data-sync-status-target="badge"><%= repository.sync_status %></span><span data-sync-status-target="progress"><%= " · #{repository.sync_progress}" if repository.sync_progress.present? %></span>
+    </span>
+  </div>
+</div>
