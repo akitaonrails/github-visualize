@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_09_171720) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_09_175146) do
   create_table "commits", force: :cascade do |t|
     t.integer "additions", default: 0, null: false
     t.string "author_login"
@@ -34,6 +34,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_171720) do
     t.string "name", null: false
     t.string "owner", null: false
     t.string "sync_error"
+    t.string "sync_progress"
     t.string "sync_status", default: "pending", null: false
     t.datetime "updated_at", null: false
     t.index ["owner", "name"], name: "index_repositories_on_owner_and_name", unique: true

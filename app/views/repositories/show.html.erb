@@ -10,8 +10,16 @@
   </div>
 
   <div class="flex items-center gap-2 text-xs">
-    <span class="border rounded-full px-2 py-1 <%= sync_status_class(@repository.sync_status) %>">
-      <%= @repository.sync_status %><%= " · #{time_ago_in_words(@repository.last_synced_at)} ago" if @repository.last_synced_at %>
+    <span class="border rounded-full px-2 py-1 <%= sync_status_class(@repository.sync_status) %>"
+          data-controller="sync-status"
+          data-sync-status-url-value="<%= repository_sync_status_path(owner: @repository.owner, name: @repository.name) %>"
+          data-sync-status-state-value="<%= @repository.sync_status %>">
+      <span data-sync-status-target="badge"><%= @repository.sync_status %></span><span data-sync-status-target="progress"><%=
+        if @repository.sync_progress.present?
+          " · #{@repository.sync_progress}"
+        elsif @repository.last_synced_at
+          " · #{time_ago_in_words(@repository.last_synced_at)} ago"
+        end %></span>
     </span>
     <%= button_to "sync now", repository_sync_path(owner: @repository.owner, name: @repository.name),
           class: "bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 rounded px-3 py-1 cursor-pointer" %>
@@ -31,7 +39,7 @@
 
 <% if @timeline[:total_commits].zero? %>
   <p class="mt-16 text-neutral-500 text-center">
-    No commits synced yet<%= @repository.syncing? ? " — sync in progress, refresh in a moment." : "." %>
+    No commits synced yet<%= @repository.syncing? ? " — sync in progress, the charts will appear here automatically." : "." %>
   </p>
 <% else %>
   <%# ── Commit timeline: lines written over time + commit log replay ── %>

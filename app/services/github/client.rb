@@ -45,6 +45,8 @@ module Github
 
     # Returns { description:, default_branch:, commits: [ { sha:, message:, ... } ] }
     # with commits newer than +since+, capped at +max_commits+.
+    # Yields each page of commits as it arrives when a block is given,
+    # so callers can persist and report progress incrementally.
     def repository_overview(owner, name, since: nil, max_commits: 1000)
       commits = []
       cursor = nil
@@ -60,7 +62,9 @@ module Github
         default_branch = branch_ref["name"]
         history = branch_ref.dig("target", "history") or break
 
-        commits.concat(history["nodes"].map { |node| commit_attributes(node) })
+        page_commits = history["nodes"].map { |node| commit_attributes(node) }
+        yield page_commits if block_given? && page_commits.any?
+        commits.concat(page_commits)
         page = history["pageInfo"]
         break unless page["hasNextPage"] && commits.size < max_commits
         cursor = page["endCursor"]

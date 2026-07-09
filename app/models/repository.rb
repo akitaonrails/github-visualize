@@ -34,14 +34,14 @@ class Repository < ApplicationRecord
   end
 
   def start_sync!
-    update!(sync_status: "syncing", sync_error: nil)
+    update!(sync_status: "syncing", sync_error: nil, sync_progress: "starting")
   end
 
   def finish_sync!
-    update!(sync_status: "synced", sync_error: nil, last_synced_at: Time.current)
+    update!(sync_status: "synced", sync_error: nil, sync_progress: nil, last_synced_at: Time.current)
   end
 
   def fail_sync!(error)
-    update!(sync_status: "failed", sync_error: error.to_s.truncate(500))
+    update!(sync_status: "failed", sync_error: error.to_s.truncate(500), sync_progress: nil)
   end
 end

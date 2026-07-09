@@ -12,5 +12,6 @@ Rails.application.routes.draw do
     get "", to: "repositories#show", as: :repository
     delete "", to: "repositories#destroy"
     post "sync", to: "syncs#create", as: :repository_sync
+    get "status", to: "sync_statuses#show", as: :repository_sync_status
   end
 end

@@ -68,8 +68,11 @@
             <span class="text-pink-400">+<%= number_with_delimiter(stats.total_additions) %></span>
             <span class="text-cyan-400">-<%= number_with_delimiter(stats.total_deletions) %></span>
           </span>
-          <span class="border rounded-full px-2 py-0.5 <%= sync_status_class(repository.sync_status) %>">
-            <%= repository.sync_status %>
+          <span class="border rounded-full px-2 py-0.5 <%= sync_status_class(repository.sync_status) %>"
+                data-controller="sync-status"
+                data-sync-status-url-value="<%= repository_sync_status_path(owner: repository.owner, name: repository.name) %>"
+                data-sync-status-state-value="<%= repository.sync_status %>">
+            <span data-sync-status-target="badge"><%= repository.sync_status %></span><span data-sync-status-target="progress"><%= " · #{repository.sync_progress}" if repository.sync_progress.present? %></span>
           </span>
         </div>
       </div>

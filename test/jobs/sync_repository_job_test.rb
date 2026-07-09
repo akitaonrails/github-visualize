@@ -28,6 +28,7 @@ class SyncRepositoryJobTest < ActiveSupport::TestCase
     assert_equal [ "abc123" ], @repository.commits.pluck(:sha)
     assert_equal [ 42 ], @repository.workflow_runs.pluck(:github_id)
     assert_not_nil @repository.last_synced_at
+    assert_nil @repository.sync_progress
   end
 
   test "is idempotent thanks to upserts" do

@@ -40,9 +40,13 @@ module Github
         .to_return({ status: 200, headers: github_headers, body: page_one },
                    { status: 200, headers: github_headers, body: page_two })
 
-      overview = @client.repository_overview("akitaonrails", "ai-memory")
+      batches = []
+      overview = @client.repository_overview("akitaonrails", "ai-memory") do |batch|
+        batches << batch.map { |commit| commit[:sha] }
+      end
 
       assert_equal %w[one two], overview[:commits].map { |commit| commit[:sha] }
+      assert_equal [ %w[one], %w[two] ], batches
     end
 
     test "repository_overview raises NotFoundError for unknown repos" do
