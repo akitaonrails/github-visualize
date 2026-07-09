@@ -37,18 +37,30 @@
   </p>
 <% end %>
 
+<div class="flex items-center justify-end gap-1 mt-8 text-xs">
+  <span class="text-neutral-500 uppercase tracking-widest mr-2">window</span>
+  <% RepositoriesController::WINDOWS.each do |days| %>
+    <%= link_to "#{days}d",
+          repository_path(owner: @repository.owner, name: @repository.name,
+                          days: (days unless days == RepositoriesController::DEFAULT_WINDOW)),
+          class: "border rounded px-2.5 py-1 #{days == @window_days ?
+            'border-fuchsia-700 bg-fuchsia-950/60 text-fuchsia-300' :
+            'border-neutral-700 text-neutral-400 hover:bg-neutral-800'}" %>
+  <% end %>
+</div>
+
 <% if @timeline[:total_commits].zero? %>
   <p class="mt-16 text-neutral-500 text-center">
-    No commits synced yet<%= @repository.syncing? ? " — sync in progress, the charts will appear here automatically." : "." %>
+    No commits in the last <%= @window_days %> days<%= @repository.syncing? ? " (yet) — sync in progress, the charts will appear here automatically." : " — try a wider window." %>
   </p>
 <% else %>
   <%# ── Commit timeline: lines written over time + commit log replay ── %>
-  <section class="mt-10 border border-neutral-800 rounded-lg bg-neutral-950/60 p-5"
+  <section class="mt-4 border border-neutral-800 rounded-lg bg-neutral-950/60 p-5"
            data-controller="timeline" data-timeline-data-value="<%= @timeline.to_json %>">
     <div class="flex items-end justify-between gap-4 flex-wrap">
       <div class="flex items-end gap-6">
         <div>
-          <p class="text-xs text-neutral-500 uppercase tracking-widest mb-1">git log · <%= @repository.default_branch %></p>
+          <p class="text-xs text-neutral-500 uppercase tracking-widest mb-1">git log · <%= @repository.default_branch %> · last <%= @window_days %> days</p>
           <p class="text-4xl font-bold text-neutral-50" data-timeline-target="commits">0</p>
           <p class="text-xs text-neutral-500">commits</p>
         </div>
@@ -79,7 +91,7 @@
     <div class="flex items-end justify-between gap-4">
       <div>
         <p class="text-xs text-neutral-500 uppercase tracking-widest mb-1">
-          last <%= Visualizations::CommitHeatmap::WINDOW_DAYS %> days · 24 hours · <%= Time.zone.name %>
+          last <%= @window_days %> days · 24 hours · <%= Time.zone.name %>
         </p>
         <p class="text-3xl font-bold text-neutral-50"><span data-heatmap-target="counter"><%= number_with_delimiter(@heatmap[:total]) %></span> commits</p>
       </div>

@@ -15,6 +15,14 @@ module Visualizations
       assert_operator lanes[:from], :<, lanes[:to]
     end
 
+    test "window excludes older runs" do
+      lanes = CiLanes.new(repositories(:ai_memory), window_days: 3).to_h
+
+      assert_equal 2, lanes[:total_lanes]
+      assert_equal 2, lanes[:lanes].sum { |lane| lane[:runs].size } # 6-day-old run excluded
+      assert_equal %w[green], lanes[:lanes].first[:runs].map { |run| run[:state] }
+    end
+
     test "empty repository yields no lanes" do
       lanes = CiLanes.new(repositories(:frank_go)).to_h
 

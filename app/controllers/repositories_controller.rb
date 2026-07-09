@@ -1,10 +1,14 @@
 class RepositoriesController < ApplicationController
+  WINDOWS = [ 15, 42, 60, 90 ].freeze
+  DEFAULT_WINDOW = 42
+
   before_action :set_repository, only: %i[show destroy]
 
   def show
-    @heatmap = Visualizations::CommitHeatmap.new(@repository).to_h
-    @timeline = Visualizations::CommitTimeline.new(@repository).to_h
-    @ci_lanes = Visualizations::CiLanes.new(@repository).to_h
+    @window_days = WINDOWS.include?(params[:days].to_i) ? params[:days].to_i : DEFAULT_WINDOW
+    @heatmap = Visualizations::CommitHeatmap.new(@repository, window_days: @window_days).to_h
+    @timeline = Visualizations::CommitTimeline.new(@repository, window_days: @window_days).to_h
+    @ci_lanes = Visualizations::CiLanes.new(@repository, window_days: @window_days).to_h
   end
 
   def create

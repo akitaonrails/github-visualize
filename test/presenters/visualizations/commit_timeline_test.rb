@@ -18,6 +18,15 @@ module Visualizations
       assert_match(/commits in/, timeline[:peak])
     end
 
+    test "window excludes older commits" do
+      timeline = CommitTimeline.new(repositories(:ai_memory), window_days: 7).to_h
+
+      assert_equal 3, timeline[:total_commits] # 10-day-old commit falls outside
+      assert_equal 340, timeline[:total_additions]
+      assert_equal 60, timeline[:total_deletions]
+      assert_equal 3, timeline[:log].size
+    end
+
     test "empty repository yields empty timeline" do
       timeline = CommitTimeline.new(repositories(:frank_go)).to_h
 

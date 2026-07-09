@@ -17,14 +17,27 @@ export default class extends Controller {
 
   connect() {
     this.numberFormat = new Intl.NumberFormat()
-    this.resize = () => this.draw(this.progress ?? 1)
+    this.resize = () => this.draw(this.progress ?? 0)
     window.addEventListener("resize", this.resize)
-    this.replay()
+    this.draw(0)
+    this.playWhenVisible()
   }
 
   disconnect() {
+    this.observer?.disconnect()
     window.removeEventListener("resize", this.resize)
     cancelAnimationFrame(this.frame)
+  }
+
+  // Defer the replay until the chart scrolls into view.
+  playWhenVisible() {
+    this.observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        this.observer.disconnect()
+        this.replay()
+      }
+    }, { threshold: 0.2 })
+    this.observer.observe(this.element)
   }
 
   replay() {

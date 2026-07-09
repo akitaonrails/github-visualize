@@ -5,7 +5,7 @@ module Visualizations
     CHIP_DAYS = 21
 
     Stats = Data.define(:total_commits, :total_additions, :total_deletions,
-                        :daily_counts, :max_daily, :ci_conclusion)
+                        :daily_counts, :max_daily, :ci_conclusion, :last_committed_at)
 
     def initialize(repositories)
       @repositories = repositories
@@ -30,7 +30,8 @@ module Visualizations
           total_deletions: deletion_sums.fetch(repository.id, 0),
           daily_counts: chip_dates.map { |date| daily.fetch(date, 0) },
           max_daily: daily.values.max || 0,
-          ci_conclusion: latest_ci_conclusions[repository.id]
+          ci_conclusion: latest_ci_conclusions[repository.id],
+          last_committed_at: last_commit_times[repository.id]
         )
       end
     end
@@ -55,6 +56,10 @@ module Visualizations
         .transform_values do |rows|
           rows.map { |row| row[1].in_time_zone.to_date }.tally
         end
+    end
+
+    def last_commit_times
+      @last_commit_times ||= Commit.group(:repository_id).maximum(:committed_at)
     end
 
     def latest_ci_conclusions

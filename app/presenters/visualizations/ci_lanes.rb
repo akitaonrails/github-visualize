@@ -2,8 +2,11 @@ module Visualizations
   # One lane per workflow with a tick per run, like the
   # "race to green, by platform" chart in the Bun post.
   class CiLanes
-    def initialize(repository)
+    WINDOW_DAYS = 42
+
+    def initialize(repository, window_days: WINDOW_DAYS)
       @repository = repository
+      @window_days = window_days
     end
 
     def to_h
@@ -31,7 +34,9 @@ module Visualizations
     private
 
     def runs
-      @runs ||= @repository.workflow_runs.where.not(run_started_at: nil).chronological.to_a
+      @runs ||= @repository.workflow_runs
+        .where(run_started_at: @window_days.days.ago.beginning_of_day..)
+        .chronological.to_a
     end
 
     def state_for(run)

@@ -13,6 +13,16 @@ class RepositoriesControllerTest < ActionDispatch::IntegrationTest
     assert_match "data-controller=\"ci-lanes\"", response.body
   end
 
+  test "show honors the days window param and falls back on invalid values" do
+    get repository_url(owner: "akitaonrails", name: "ai-memory", params: { days: 15 })
+    assert_response :success
+    assert_match "last 15 days", response.body
+
+    get repository_url(owner: "akitaonrails", name: "ai-memory", params: { days: 999 })
+    assert_response :success
+    assert_match "last 42 days", response.body
+  end
+
   test "show 404s for unknown repositories" do
     get repository_url(owner: "akitaonrails", name: "does-not-exist")
     assert_response :not_found

@@ -4,10 +4,12 @@ module Visualizations
   class CommitTimeline
     BUCKETS = 160
     LOG_SIZE = 150
+    WINDOW_DAYS = 42
 
-    def initialize(repository, buckets: BUCKETS)
+    def initialize(repository, buckets: BUCKETS, window_days: WINDOW_DAYS)
       @repository = repository
       @bucket_count = buckets
+      @window_days = window_days
     end
 
     def to_h
@@ -42,12 +44,18 @@ module Visualizations
 
     private
 
+    def window
+      @window_days.days.ago.beginning_of_day..
+    end
+
     def commits
-      @commits ||= @repository.commits.chronological.pluck(:committed_at, :additions, :deletions)
+      @commits ||= @repository.commits.where(committed_at: window)
+        .chronological.pluck(:committed_at, :additions, :deletions)
     end
 
     def log_entries
-      @repository.commits.order(committed_at: :desc).limit(LOG_SIZE).map do |commit|
+      @repository.commits.where(committed_at: window)
+        .order(committed_at: :desc).limit(LOG_SIZE).map do |commit|
         {
           at: commit.committed_at.in_time_zone.strftime("%b %-d %H:%M"),
           message: commit.summary,

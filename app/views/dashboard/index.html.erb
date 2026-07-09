@@ -42,7 +42,26 @@
     </div>
   </section>
 
-  <section class="mt-10 grid gap-4 sm:grid-cols-2">
+  <div class="flex items-center justify-end gap-1 mt-10 text-xs">
+    <span class="text-neutral-500 uppercase tracking-widest mr-2">sort</span>
+    <% active_key, active_direction = @sort.split("_") %>
+    <% { "updated" => "modified", "name" => "name", "created" => "created" }.each do |key, label| %>
+      <% is_active = active_key == key %>
+      <% next_direction =
+           if is_active
+             active_direction == "desc" ? "asc" : "desc"
+           else
+             key == "name" ? "asc" : "desc"
+           end %>
+      <%= link_to "#{label}#{is_active ? (active_direction == "desc" ? " ↓" : " ↑") : ""}",
+            root_path(sort: "#{key}_#{next_direction}"),
+            class: "border rounded px-2.5 py-1 #{is_active ?
+              'border-fuchsia-700 bg-fuchsia-950/60 text-fuchsia-300' :
+              'border-neutral-700 text-neutral-400 hover:bg-neutral-800'}" %>
+    <% end %>
+  </div>
+
+  <section class="mt-3 grid gap-4 sm:grid-cols-2">
     <% @repositories.each do |repository| %>
       <% stats = @overview.for(repository) %>
       <div class="border border-neutral-800 rounded-lg p-4 bg-neutral-950/60 hover:border-neutral-700">
@@ -62,7 +81,11 @@
           <% end %>
         </div>
 
-        <div class="flex items-center justify-between mt-4 text-xs">
+        <p class="text-[11px] text-neutral-600 mt-2">
+          last commit: <%= stats.last_committed_at ? "#{time_ago_in_words(stats.last_committed_at)} ago" : "none synced" %>
+        </p>
+
+        <div class="flex items-center justify-between mt-3 text-xs">
           <span class="text-neutral-400">
             <%= number_with_delimiter(stats.total_commits) %> commits
             <span class="text-pink-400">+<%= number_with_delimiter(stats.total_additions) %></span>
