@@ -26,15 +26,16 @@ test:
 #
 # Similarly, if you deploy your application as a Docker container, you must
 # ensure the database is located in a persisted volume.
+# In Docker, /rails/storage is the persisted volume (see docker-compose.yml).
 production:
   primary:
     <<: *default
-    # database: path/to/persistent/storage/production.sqlite3
+    database: storage/production.sqlite3
   cache:
     <<: *default
-    # database: path/to/persistent/storage/production_cache.sqlite3
+    database: storage/production_cache.sqlite3
     migrations_paths: db/cache_migrate
   queue:
     <<: *default
-    # database: path/to/persistent/storage/production_queue.sqlite3
+    database: storage/production_queue.sqlite3
     migrations_paths: db/queue_migrate
