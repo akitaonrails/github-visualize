@@ -1,0 +1,116 @@
+<% content_for :title, "#{@repository.full_name} — GitHub Visualize" %>
+
+<div class="flex items-end justify-between gap-4 flex-wrap">
+  <div>
+    <p class="text-xs text-neutral-500 uppercase tracking-widest mb-1">
+      <%= link_to "← dashboard", root_path, class: "hover:text-neutral-300" %>
+    </p>
+    <h1 class="text-3xl font-bold text-neutral-50"><%= @repository.full_name %></h1>
+    <p class="text-sm text-neutral-500 mt-1"><%= @repository.description %></p>
+  </div>
+
+  <div class="flex items-center gap-2 text-xs">
+    <span class="border rounded-full px-2 py-1 <%= sync_status_class(@repository.sync_status) %>">
+      <%= @repository.sync_status %><%= " · #{time_ago_in_words(@repository.last_synced_at)} ago" if @repository.last_synced_at %>
+    </span>
+    <%= button_to "sync now", repository_sync_path(owner: @repository.owner, name: @repository.name),
+          class: "bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 rounded px-3 py-1 cursor-pointer" %>
+    <%= link_to "github ↗", @repository.github_url, target: "_blank", rel: "noopener",
+          class: "border border-neutral-700 rounded px-3 py-1 hover:bg-neutral-800" %>
+    <%= button_to "remove", repository_path(owner: @repository.owner, name: @repository.name),
+          method: :delete, data: { turbo_confirm: "Remove #{@repository.full_name} and all its data?" },
+          class: "border border-red-900 text-red-400 rounded px-3 py-1 hover:bg-red-950 cursor-pointer" %>
+  </div>
+</div>
+
+<% if @repository.sync_error.present? %>
+  <p class="mt-4 text-sm text-red-300 border border-red-900 bg-red-950/40 rounded px-3 py-2">
+    Last sync failed: <%= @repository.sync_error %>
+  </p>
+<% end %>
+
+<% if @timeline[:total_commits].zero? %>
+  <p class="mt-16 text-neutral-500 text-center">
+    No commits synced yet<%= @repository.syncing? ? " — sync in progress, refresh in a moment." : "." %>
+  </p>
+<% else %>
+  <%# ── Commit timeline: lines written over time + commit log replay ── %>
+  <section class="mt-10 border border-neutral-800 rounded-lg bg-neutral-950/60 p-5"
+           data-controller="timeline" data-timeline-data-value="<%= @timeline.to_json %>">
+    <div class="flex items-end justify-between gap-4 flex-wrap">
+      <div class="flex items-end gap-6">
+        <div>
+          <p class="text-xs text-neutral-500 uppercase tracking-widest mb-1">git log · <%= @repository.default_branch %></p>
+          <p class="text-4xl font-bold text-neutral-50" data-timeline-target="commits">0</p>
+          <p class="text-xs text-neutral-500">commits</p>
+        </div>
+        <div>
+          <p class="text-4xl font-bold text-pink-400" data-timeline-target="lines">+0</p>
+          <p class="text-xs text-neutral-500">lines added · <span class="text-cyan-400" data-timeline-target="deleted">-0</span> deleted</p>
+        </div>
+      </div>
+      <div class="text-right">
+        <p class="text-xs text-neutral-500">peak: <%= @timeline[:peak] %></p>
+        <button type="button" data-action="timeline#replay"
+                class="mt-1 text-xs border border-neutral-700 rounded px-3 py-1 hover:bg-neutral-800 cursor-pointer">⟳ replay</button>
+      </div>
+    </div>
+
+    <canvas data-timeline-target="canvas" class="w-full mt-4" style="height: 220px"></canvas>
+    <div class="flex justify-between text-xs text-neutral-600 mt-1">
+      <span><%= @timeline[:started_at] %></span>
+      <span><%= @timeline[:ended_at] %></span>
+    </div>
+
+    <div data-timeline-target="log" class="mt-4 h-32 overflow-hidden text-xs leading-5 text-neutral-400 border-t border-neutral-800 pt-2"></div>
+  </section>
+
+  <%# ── Day-by-hour commit heatmap ── %>
+  <section class="mt-6 border border-neutral-800 rounded-lg bg-neutral-950/60 p-5"
+           data-controller="heatmap" data-heatmap-data-value="<%= @heatmap.to_json %>">
+    <div class="flex items-end justify-between gap-4">
+      <div>
+        <p class="text-xs text-neutral-500 uppercase tracking-widest mb-1">
+          last <%= Visualizations::CommitHeatmap::WINDOW_DAYS %> days · 24 hours · <%= Time.zone.name %>
+        </p>
+        <p class="text-3xl font-bold text-neutral-50"><%= number_with_delimiter(@heatmap[:total]) %> commits</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-xs text-neutral-500">1</span>
+        <span class="inline-block w-24 h-2.5 rounded-full"
+              style="background: linear-gradient(to right, #2d1b4e, #7e22ce, #c026d3, #ec4899, #f97316, #facc15)"></span>
+        <span class="text-xs text-neutral-500"><%= @heatmap[:max] %> commits/hour</span>
+        <button type="button" data-action="heatmap#replay"
+                class="text-xs border border-neutral-700 rounded px-3 py-1 hover:bg-neutral-800 cursor-pointer">⟳ replay</button>
+      </div>
+    </div>
+
+    <canvas data-heatmap-target="canvas" class="w-full mt-4"></canvas>
+  </section>
+
+  <%# ── CI: the race to green, by workflow ── %>
+  <section class="mt-6 border border-neutral-800 rounded-lg bg-neutral-950/60 p-5"
+           data-controller="ci-lanes" data-ci-lanes-data-value="<%= @ci_lanes.to_json %>">
+    <div class="flex items-end justify-between gap-4">
+      <div>
+        <p class="text-xs text-neutral-500 uppercase tracking-widest mb-1">buildkite? no — actions · the race to green</p>
+        <p class="text-3xl font-bold">
+          <span class="text-emerald-400"><%= @ci_lanes[:green_lanes] %> / <%= @ci_lanes[:total_lanes] %></span>
+          <span class="text-neutral-50 text-xl">workflows green</span>
+        </p>
+      </div>
+      <button type="button" data-action="ci-lanes#replay"
+              class="text-xs border border-neutral-700 rounded px-3 py-1 hover:bg-neutral-800 cursor-pointer">⟳ replay</button>
+    </div>
+
+    <% if @ci_lanes[:total_lanes].zero? %>
+      <p class="mt-6 text-sm text-neutral-500">No workflow runs found for this repository.</p>
+    <% else %>
+      <canvas data-ci-lanes-target="canvas" class="w-full mt-4"></canvas>
+      <div class="flex justify-between text-xs text-neutral-600 mt-1">
+        <span><%= @ci_lanes[:from_label] %></span>
+        <span><%= @ci_lanes[:to_label] %></span>
+      </div>
+    <% end %>
+  </section>
+<% end %>

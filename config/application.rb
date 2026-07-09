@@ -33,7 +33,7 @@ module GithubVisualize
     # These settings can be overridden in specific environments using the files
     # in config/environments, which are processed later.
     #
-    # config.time_zone = "Central Time (US & Canada)"
-    # config.eager_load_paths << Rails.root.join("extras")
+    # Timestamps are stored in UTC; this only affects how charts bucket by day/hour.
+    config.time_zone = ENV.fetch("APP_TIME_ZONE", "UTC")
   end
 end

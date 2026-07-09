@@ -1,29 +1,43 @@
 <!DOCTYPE html>
-<html>
+<html class="bg-[#0b0a10]">
   <head>
-    <title><%= content_for(:title) || "Github Visualize" %></title>
+    <title><%= content_for(:title) || "GitHub Visualize" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Github Visualize">
-    <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
     <%= yield :head %>
 
-    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
-    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
-
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icon.png">
 
-    <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <main class="container mx-auto mt-28 px-5 flex">
+  <body class="min-h-screen bg-[#0b0a10] text-neutral-200 font-mono antialiased">
+    <header class="border-b border-neutral-800/80">
+      <div class="container mx-auto max-w-6xl px-5 py-4 flex items-center justify-between">
+        <%= link_to root_path, class: "flex items-center gap-2 text-neutral-100 hover:text-white" do %>
+          <span class="text-fuchsia-400">▦</span>
+          <span class="tracking-tight font-semibold">github-visualize</span>
+        <% end %>
+        <span class="text-xs text-neutral-500 uppercase tracking-widest">repo progress, replayed</span>
+      </div>
+    </header>
+
+    <% if notice.present? || alert.present? %>
+      <div class="container mx-auto max-w-6xl px-5 pt-4">
+        <% if notice.present? %>
+          <p class="text-sm text-emerald-300 border border-emerald-900 bg-emerald-950/40 rounded px-3 py-2"><%= notice %></p>
+        <% end %>
+        <% if alert.present? %>
+          <p class="text-sm text-red-300 border border-red-900 bg-red-950/40 rounded px-3 py-2"><%= alert %></p>
+        <% end %>
+      </div>
+    <% end %>
+
+    <main class="container mx-auto max-w-6xl px-5 py-8">
       <%= yield %>
     </main>
   </body>
