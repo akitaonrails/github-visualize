@@ -59,6 +59,13 @@ Copy `.env.example` to `.env` (gitignored) and fill in:
 | `APP_TIME_ZONE` | no | Timezone used to bucket charts (default UTC; compose sets America/Sao_Paulo) |
 | `STORAGE_PATH` | no | Host dir for the SQLite volume (default `./storage`) |
 
+## Roadmap
+
+- **"Connect GitHub" login button (OAuth Device Flow)** replacing manual
+  token setup for self-hosters — designed and documented in
+  [docs/github-device-flow-login.md](docs/github-device-flow-login.md),
+  waiting on a one-time OAuth App registration.
+
 ## Development
 
 ```bash
