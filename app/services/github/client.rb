@@ -73,6 +73,11 @@ module Github
       { description: description, default_branch: default_branch, commits: commits.first(max_commits) }
     end
 
+    # Login of the user the token belongs to.
+    def authenticated_login
+      rest_get("/user")["login"]
+    end
+
     # Repos owned by the token's user (public and private), most recently
     # pushed first. Used for the add-repository autocomplete.
     def user_repositories(max_repos: 300)

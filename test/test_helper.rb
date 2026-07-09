@@ -9,6 +9,11 @@ require_relative "../config/environment"
 require "rails/test_help"
 require "webmock/minitest"
 
+# Tests must never see the developer's real credentials from the shell;
+# individual tests set these explicitly when they need them.
+ENV.delete("GITHUB_TOKEN")
+ENV.delete("GITHUB_OWNER")
+
 module ActiveSupport
   class TestCase
     # Run tests in parallel with specified workers

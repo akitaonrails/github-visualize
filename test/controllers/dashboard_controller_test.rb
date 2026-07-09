@@ -31,6 +31,19 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "header shows the configured owner" do
+    ENV["GITHUB_OWNER"] = "akitaonrails"
+    get root_url
+    assert_match "(akitaonrails)", response.body
+  ensure
+    ENV.delete("GITHUB_OWNER")
+  end
+
+  test "header omits the owner when neither GITHUB_OWNER nor a token is set" do
+    get root_url
+    assert_no_match(/\(akitaonrails\)/, response.body)
+  end
+
   test "index renders empty state without repositories" do
     Repository.destroy_all
     get root_url

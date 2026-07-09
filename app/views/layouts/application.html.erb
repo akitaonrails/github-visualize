@@ -21,6 +21,9 @@
         <%= link_to root_path, class: "flex items-center gap-2 text-neutral-100 hover:text-white" do %>
           <span class="text-fuchsia-400">▦</span>
           <span class="tracking-tight font-semibold">github-visualize</span>
+          <% if (owner = configured_github_owner) %>
+            <span class="text-neutral-500 font-normal">(<%= owner %>)</span>
+          <% end %>
         <% end %>
         <span class="text-xs text-neutral-500 uppercase tracking-widest">repo progress, replayed</span>
       </div>

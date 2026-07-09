@@ -19,6 +19,21 @@ module ApplicationHelper
     format("#%02x%02x%02x", *channels)
   end
 
+  # Owner shown next to the app title: GITHUB_OWNER, or the token's login.
+  def configured_github_owner
+    ENV["GITHUB_OWNER"].presence || token_login
+  end
+
+  def token_login
+    return if ENV["GITHUB_TOKEN"].blank?
+
+    Rails.cache.fetch("github/token_login", expires_in: 1.hour) do
+      Github::Client.new.authenticated_login
+    end
+  rescue Github::Client::Error
+    nil
+  end
+
   def ci_dot_class(conclusion)
     case conclusion
     when "success" then "bg-emerald-400"
