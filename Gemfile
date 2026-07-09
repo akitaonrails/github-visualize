@@ -56,4 +56,10 @@ group :test do
   # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
   gem "capybara"
   gem "selenium-webdriver"
+
+  # Stub external HTTP (GitHub API) in tests
+  gem "webmock"
+
+  # Test coverage reports
+  gem "simplecov", require: false
 end
