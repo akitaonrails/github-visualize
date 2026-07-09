@@ -43,8 +43,10 @@ network only.
 Data is fetched with the **minimum possible API calls**: commit history comes
 from the GitHub GraphQL API (which returns additions/deletions in bulk, 100
 commits per request) and workflow runs from the REST API. Syncs are
-incremental and idempotent (`upsert_all`), and run every 30 minutes in
-production (`config/recurring.yml`).
+incremental and idempotent (`upsert_all`), and run on an activity-tiered
+schedule in production (`config/recurring.yml`): repos with commits in the
+last 7 days sync every 10 minutes, the last 30 days hourly, older ones every
+6 hours.
 
 ## Configuration
 
@@ -168,7 +170,8 @@ Notes for self-hosters:
     every page (the `/up` health check stays open).
   - `ALLOWED_HOSTS=192.168.0.90,gv.example.com` — Host-header allowlist,
     mitigating DNS-rebinding attacks against a no-auth LAN service.
-- Databases are migrated automatically on boot; repos re-sync every 30 minutes.
+- Databases are migrated automatically on boot; repos re-sync on an
+  activity-tiered schedule (active: 10 min, recent: hourly, stale: 6 hours).
 
 ### Deploying your own server with bin/deploy
 

@@ -34,7 +34,9 @@ output through `grep` as a pass signal — check the exit status.
   workflow runs and user repos via REST. Token from `ENV["GITHUB_TOKEN"]`.
 - `app/jobs/sync_repository_job.rb` — page-by-page upserts (idempotent,
   `unique_by`) with `sync_progress` updates for the live UI. Recurring
-  every 30 min in production (`config/recurring.yml`).
+  on an activity-tiered recurring schedule in production
+  (`config/recurring.yml`): hot ≤7d → 10 min, warm ≤30d → hourly,
+  cold → 6 hours; tiers computed in `SyncAllRepositoriesJob`.
 - `app/presenters/visualizations/` — POROs that compute chart series
   server-side; views embed them as JSON in Stimulus values.
 - `app/javascript/controllers/` — canvas chart controllers extend
