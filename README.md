@@ -154,8 +154,13 @@ Notes for self-hosters:
   Private repos work as long as the token can read them.
 - On SELinux hosts (Fedora/openSUSE MicroOS), do **not** add `:Z` to the bind
   mount — it breaks SQLite. Add `security_opt: ["label:disable"]` instead.
-- There is no authentication in v1 — keep it on a trusted network (LAN, VPN,
-  or behind an authenticating proxy/tunnel).
+- There is no user authentication in v1 — keep it on a trusted network (LAN,
+  VPN, or behind an authenticating proxy/tunnel). For anything more exposed,
+  two opt-in mitigations are built in:
+  - `HTTP_BASIC_USER` + `HTTP_BASIC_PASSWORD` — enables HTTP Basic auth on
+    every page (the `/up` health check stays open).
+  - `ALLOWED_HOSTS=192.168.0.90,gv.example.com` — Host-header allowlist,
+    mitigating DNS-rebinding attacks against a no-auth LAN service.
 - Databases are migrated automatically on boot; repos re-sync every 30 minutes.
 
 ### Homelab (openSUSE MicroOS) notes

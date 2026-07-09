@@ -27,6 +27,13 @@ Rails.application.configure do
   config.assume_ssl = ENV["ASSUME_SSL"] == "true"
   config.force_ssl = ENV["FORCE_SSL"] == "true"
 
+  # Opt-in Host-header allowlist (mitigates DNS rebinding against a
+  # no-auth LAN app). Example: ALLOWED_HOSTS=192.168.0.90,gv.example.com
+  if ENV["ALLOWED_HOSTS"].present?
+    config.hosts = ENV["ALLOWED_HOSTS"].split(",").map(&:strip)
+    config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+  end
+
   # Skip http-to-https redirect for the default health check endpoint.
   # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
 

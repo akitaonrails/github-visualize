@@ -17,6 +17,13 @@ class RepositoryTest < ActiveSupport::TestCase
     assert Repository.new(owner: "a-b_c.d", name: "x.y-z_1").valid?
   end
 
+  test "rejects dot-only path segments" do
+    assert_not Repository.new(owner: "..", name: "x").valid?
+    assert_not Repository.new(owner: "a", name: ".").valid?
+    assert_not Repository.new(owner: "a", name: "..").valid?
+    assert Repository.new(owner: "a", name: "x..y").valid?
+  end
+
   test "name must be unique per owner ignoring case" do
     existing = repositories(:ai_memory)
     duplicate = Repository.new(owner: existing.owner, name: existing.name.upcase)

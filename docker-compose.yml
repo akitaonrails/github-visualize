@@ -39,6 +39,11 @@ services:
 
       # Optional: bare repo names in the add form are scoped to this owner
       - GITHUB_OWNER=${GITHUB_OWNER:-}
+
+      # Optional hardening (recommended beyond a trusted LAN)
+      - HTTP_BASIC_USER=${HTTP_BASIC_USER:-}
+      - HTTP_BASIC_PASSWORD=${HTTP_BASIC_PASSWORD:-}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/up"]
       interval: 30s

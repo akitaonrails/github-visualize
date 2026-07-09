@@ -1,6 +1,8 @@
 class Repository < ApplicationRecord
   SYNC_STATUSES = %w[pending syncing synced failed].freeze
-  NAME_FORMAT = /\A[\w.-]+\z/
+  # Owner/name become path segments in GitHub API URLs; "." and ".." are
+  # excluded so a crafted value can never traverse the request path.
+  NAME_FORMAT = /\A(?!\.{1,2}\z)[\w.-]+\z/
 
   has_many :commits, dependent: :delete_all
   has_many :workflow_runs, dependent: :delete_all
