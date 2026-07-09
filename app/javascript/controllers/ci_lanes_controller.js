@@ -1,53 +1,12 @@
-import { Controller } from "@hotwired/stimulus"
+import PlaybackController from "lib/playback_controller"
 
 // One lane per workflow, one tick per run, revealed chronologically:
 // the "race to green" chart from the Bun post.
-export default class extends Controller {
+export default class extends PlaybackController {
   static targets = ["canvas"]
   static values = { data: Object }
 
-  connect() {
-    this.resize = () => this.draw(this.progress ?? 0)
-    window.addEventListener("resize", this.resize)
-    this.draw(0)
-    this.playWhenVisible()
-  }
-
-  disconnect() {
-    this.observer?.disconnect()
-    window.removeEventListener("resize", this.resize)
-    cancelAnimationFrame(this.frame)
-  }
-
-  // Defer the replay until the chart scrolls into view.
-  playWhenVisible() {
-    this.observer = new IntersectionObserver((entries) => {
-      if (entries.some((entry) => entry.intersectionRatio >= 0.2)) {
-        this.observer.disconnect()
-        this.replay()
-      }
-    }, { threshold: 0.2 })
-    this.observer.observe(this.element)
-  }
-
-  replay() {
-    cancelAnimationFrame(this.frame)
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      this.progress = 1
-      this.draw(1)
-      return
-    }
-    const duration = 3000
-    const start = performance.now()
-    const tick = (now) => {
-      this.progress = Math.min((now - start) / duration, 1)
-      this.draw(this.progress)
-      if (this.progress < 1) this.frame = requestAnimationFrame(tick)
-    }
-    this.frame = requestAnimationFrame(tick)
-  }
-
-  draw(progress) {
+  render(progress) {
     const { lanes, from, to } = this.dataValue
     if (!lanes?.length) return
 

@@ -1,8 +1,8 @@
-import { Controller } from "@hotwired/stimulus"
+import PlaybackController from "lib/playback_controller"
 
 // Day-by-hour commit heatmap. Cells fade in hour by hour in chronological
 // order, with the commit counter climbing in sync with the reveal.
-export default class extends Controller {
+export default class extends PlaybackController {
   static targets = ["canvas", "counter"]
   static values = { data: Object }
 
@@ -17,47 +17,10 @@ export default class extends Controller {
 
   connect() {
     this.numberFormat = new Intl.NumberFormat()
-    this.resize = () => this.draw(this.progress ?? 0)
-    window.addEventListener("resize", this.resize)
-    this.draw(0)
-    this.playWhenVisible()
+    super.connect()
   }
 
-  disconnect() {
-    this.observer?.disconnect()
-    window.removeEventListener("resize", this.resize)
-    cancelAnimationFrame(this.frame)
-  }
-
-  // Defer the replay until the chart scrolls into view.
-  playWhenVisible() {
-    this.observer = new IntersectionObserver((entries) => {
-      if (entries.some((entry) => entry.intersectionRatio >= 0.2)) {
-        this.observer.disconnect()
-        this.replay()
-      }
-    }, { threshold: 0.2 })
-    this.observer.observe(this.element)
-  }
-
-  replay() {
-    cancelAnimationFrame(this.frame)
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      this.progress = 1
-      this.draw(1)
-      return
-    }
-    const duration = 3000
-    const start = performance.now()
-    const tick = (now) => {
-      this.progress = Math.min((now - start) / duration, 1)
-      this.draw(this.progress)
-      if (this.progress < 1) this.frame = requestAnimationFrame(tick)
-    }
-    this.frame = requestAnimationFrame(tick)
-  }
-
-  draw(progress) {
+  render(progress) {
     const { rows, max } = this.dataValue
     if (!rows?.length) return
 

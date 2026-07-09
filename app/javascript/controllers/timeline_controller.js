@@ -1,51 +1,15 @@
-import { Controller } from "@hotwired/stimulus"
+import PlaybackController from "lib/playback_controller"
 
 // Commit timeline replay: additions (pink) and deletions (cyan) per bucket,
 // with counters and a scrolling commit log, like the Bun post's git log chart.
-export default class extends Controller {
+export default class extends PlaybackController {
   static targets = ["canvas", "commits", "lines", "deleted", "log"]
   static values = { data: Object }
+  static duration = 4000
 
   connect() {
     this.numberFormat = new Intl.NumberFormat()
-    this.resize = () => this.render(this.progress ?? 0)
-    window.addEventListener("resize", this.resize)
-    this.render(0)
-    this.playWhenVisible()
-  }
-
-  disconnect() {
-    this.observer?.disconnect()
-    window.removeEventListener("resize", this.resize)
-    cancelAnimationFrame(this.frame)
-  }
-
-  // Defer the replay until the chart scrolls into view.
-  playWhenVisible() {
-    this.observer = new IntersectionObserver((entries) => {
-      if (entries.some((entry) => entry.intersectionRatio >= 0.2)) {
-        this.observer.disconnect()
-        this.replay()
-      }
-    }, { threshold: 0.2 })
-    this.observer.observe(this.element)
-  }
-
-  replay() {
-    cancelAnimationFrame(this.frame)
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      this.progress = 1
-      this.render(1)
-      return
-    }
-    const duration = 4000
-    const start = performance.now()
-    const tick = (now) => {
-      this.progress = Math.min((now - start) / duration, 1)
-      this.render(this.progress)
-      if (this.progress < 1) this.frame = requestAnimationFrame(tick)
-    }
-    this.frame = requestAnimationFrame(tick)
+    super.connect()
   }
 
   render(progress) {
