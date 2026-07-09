@@ -81,11 +81,22 @@ persist in the `storage/` volume. Healthcheck hits `/up`.
 
 ### Homelab (openSUSE MicroOS) notes
 
-- Stack root: `/var/opt/docker/github-visualize/`.
+One-command deploy:
+
+```bash
+bin/deploy    # tests + lint, build, ship via docker save|load, compose up, health check
+```
+
+- Target: `akitaonrails@192.168.0.90`, stack root `/var/opt/docker/github-visualize/`,
+  port **7592** (override with `DEPLOY_HOST`; `SKIP_CHECKS=1` skips tests).
+- Uses `deploy/docker-compose.yml` on the server; only this stack's container is
+  (re)created — other stacks are untouched.
+- Server secrets live in `/var/opt/docker/github-visualize/.env`, seeded on the
+  first deploy from the local `GITHUB_TOKEN` with a generated `SECRET_KEY_BASE`;
+  never overwritten, never in git.
 - The bind mount must **not** use `:Z` — the compose file sets
   `security_opt: label:disable` instead (SQLite + SELinux relabeling do not mix).
-- Container runs as uid 1000 (`rails`); `chown -R 1000:1000 storage/` if the
-  directory pre-exists.
+- Container runs as uid 1000 (`rails`); `bin/deploy` chowns `storage/` accordingly.
 
 ## CI
 

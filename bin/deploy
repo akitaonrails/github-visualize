@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# Deploy github-visualize to the homelab.
+#
+# Usage:
+#   bin/deploy
+#
+# Environment overrides:
+#   DEPLOY_HOST=user@host   target server (default akitaonrails@192.168.0.90)
+#   SKIP_CHECKS=1           skip tests + lint before deploying
+#
+# What it does:
+#   1. runs tests and rubocop (unless SKIP_CHECKS=1)
+#   2. builds the production image locally
+#   3. ships it over SSH with docker save | docker load (no registry needed)
+#   4. installs deploy/docker-compose.yml into /var/opt/docker/github-visualize/
+#   5. seeds the server-side .env on FIRST deploy only (SECRET_KEY_BASE is
+#      generated; GITHUB_TOKEN is taken from the local environment) — secrets
+#      never touch this git repository
+#   6. docker compose up -d (recreates only this stack's container) and
+#      waits for /up to go green
+
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+HOST="${DEPLOY_HOST:-akitaonrails@192.168.0.90}"
+STACK_DIR="/var/opt/docker/github-visualize"
+IMAGE="github-visualize:latest"
+PORT=7592
+
+if [ -z "${SKIP_CHECKS:-}" ]; then
+  echo "==> Tests + lint"
+  bin/rails test
+  bin/rubocop
+fi
+
+echo "==> Building ${IMAGE}"
+docker build -t "${IMAGE}" .
+
+echo "==> Shipping image to ${HOST} (a few minutes on first deploy)"
+docker save "${IMAGE}" | gzip | ssh "${HOST}" 'gunzip | docker load'
+
+echo "==> Preparing ${STACK_DIR}"
+ssh "${HOST}" "mkdir -p ${STACK_DIR}/storage && sudo chown -R 1000:1000 ${STACK_DIR}/storage"
+scp -q deploy/docker-compose.yml "${HOST}:${STACK_DIR}/docker-compose.yml"
+
+if ! ssh "${HOST}" "test -f ${STACK_DIR}/.env"; then
+  echo "==> Seeding ${STACK_DIR}/.env (first deploy only)"
+  : "${GITHUB_TOKEN:?GITHUB_TOKEN must be set locally to seed the server .env}"
+  printf 'SECRET_KEY_BASE=%s\nGITHUB_TOKEN=%s\n' "$(openssl rand -hex 64)" "${GITHUB_TOKEN}" |
+    ssh "${HOST}" "umask 177 && cat > ${STACK_DIR}/.env"
+fi
+
+echo "==> Starting stack"
+ssh "${HOST}" "cd ${STACK_DIR} && docker compose up -d"
+
+echo "==> Waiting for health check"
+for _ in $(seq 1 30); do
+  if ssh "${HOST}" "curl -sf -o /dev/null http://localhost:${PORT}/up"; then
+    echo "==> Deployed: http://192.168.0.90:${PORT}/"
+    exit 0
+  fi
+  sleep 2
+done
+
+echo "!! Health check failed; recent container logs:" >&2
+ssh "${HOST}" "docker logs --tail 50 github-visualize" >&2
+exit 1

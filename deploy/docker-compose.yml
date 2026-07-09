@@ -1,0 +1,33 @@
+# Server compose for the homelab (installed by bin/deploy to
+# /var/opt/docker/github-visualize/). The image is shipped with
+# docker save | docker load — no registry involved.
+#
+# Secrets live in .env next to this file on the server (SECRET_KEY_BASE,
+# GITHUB_TOKEN); bin/deploy seeds it on first deploy and never overwrites it.
+
+name: github_visualize
+
+services:
+  github-visualize:
+    image: github-visualize:latest
+    container_name: github-visualize
+    restart: always
+    # The image's non-root user; ./storage is chown'd to match by bin/deploy
+    user: "1000:1000"
+    # MicroOS SELinux: never use :Z on bind mounts (breaks SQLite)
+    security_opt:
+      - label:disable
+    ports:
+      - "7592:80"
+    volumes:
+      - ./storage:/rails/storage
+    env_file: .env
+    environment:
+      - SOLID_QUEUE_IN_PUMA=1
+      - APP_TIME_ZONE=America/Sao_Paulo
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/up"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
