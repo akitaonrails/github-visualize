@@ -64,19 +64,35 @@ export default class extends Controller {
 
     const maxLines = Math.max(...buckets.map((bucket) => bucket.additions + bucket.deletions), 1)
     const barWidth = width / buckets.length
-    const visible = Math.ceil(buckets.length * progress)
+    const scanX = width * progress
+    const fadeWidth = 30 // px behind the scan bar over which bars reach full color
 
-    buckets.slice(0, visible).forEach((bucket, index) => {
+    buckets.forEach((bucket, index) => {
       const x = index * barWidth
       const scale = (value) => Math.sqrt(value / maxLines) * (height - 8)
       const additionsHeight = scale(bucket.additions)
       const deletionsHeight = scale(bucket.deletions)
 
+      // Bars ahead of the scan bar sit dim; they light up as it passes.
+      const lit = Math.min(Math.max((scanX - x) / fadeWidth, 0), 1)
+      ctx.globalAlpha = 0.12 + 0.88 * lit
+
       ctx.fillStyle = "#f472b6"
       ctx.fillRect(x, height - additionsHeight, Math.max(barWidth - 1, 1), additionsHeight)
       ctx.fillStyle = "#22d3ee"
       ctx.fillRect(x, height - deletionsHeight, Math.max((barWidth - 1) / 2, 1), deletionsHeight)
+      ctx.globalAlpha = 1
     })
+
+    if (progress > 0 && progress < 1) {
+      const gradient = ctx.createLinearGradient(scanX - 14, 0, scanX, 0)
+      gradient.addColorStop(0, "rgba(255, 255, 255, 0)")
+      gradient.addColorStop(1, "rgba(255, 255, 255, 0.25)")
+      ctx.fillStyle = gradient
+      ctx.fillRect(scanX - 14, 0, 14, height)
+      ctx.fillStyle = "rgba(255, 255, 255, 0.9)"
+      ctx.fillRect(scanX, 0, 1.5, height)
+    }
   }
 
   updateCounters(progress) {
