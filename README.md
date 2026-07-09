@@ -7,16 +7,31 @@ blog post.
 
 For each monitored repository you get:
 
-- **Commit timeline replay** — lines added (pink) and deleted (cyan) over the
-  full history, with animated counters and a scrolling `git log` feed.
-- **Day-by-hour heatmap** — commits per hour over the last 42 days on a
-  purple-to-yellow heat ramp.
-- **The race to green** — one lane per GitHub Actions workflow, one tick per
-  run, green/red, revealed chronologically.
-- **Dashboard overview** — commits-per-repo bars, per-repo daily activity
-  chips, sync state, and latest CI status.
+- **Commit timeline replay** — lines added (pink) and deleted (cyan) per time
+  bucket (log scale), with animated counters and a scrolling `git log` feed
+  revealed by a sweeping scan bar.
 
-Every chart has a ⟳ replay button. Animations respect `prefers-reduced-motion`.
+  ![Commit timeline replay](docs/screenshots/commit-timeline.png)
+
+- **Day-by-hour heatmap** — commits per hour on a purple-to-yellow heat ramp,
+  cells fading in chronologically with the commit counter climbing in sync.
+
+  ![Day-by-hour commit heatmap](docs/screenshots/heatmap.png)
+
+- **The race to green** — one lane per GitHub Actions workflow, one tick per
+  run, dim ticks lighting up green/red as the scan bar passes.
+
+  ![CI race to green](docs/screenshots/ci-race.png)
+
+- **Dashboard overview** — commits-per-repo bars, sortable repo cards with
+  daily activity chips, live sync status, and latest CI state; new repos are
+  added in place with typeahead autocomplete.
+
+  ![Dashboard](docs/screenshots/dashboard.png)
+
+Charts replay when scrolled into view over a selectable window (15/42/60/90
+days), and every chart has a ⟳ replay button. Animations respect
+`prefers-reduced-motion`.
 
 ## Stack
 

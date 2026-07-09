@@ -81,20 +81,25 @@ export default class extends Controller {
     const fadeWidth = 30 // px behind the scan bar over which bars reach full color
 
     buckets.forEach((bucket, index) => {
+      const total = bucket.additions + bucket.deletions
+      if (total === 0) return
+
       const x = index * barWidth
-      // Log scale: one huge day would otherwise flatten every other bar.
-      const scale = (value) => (Math.log1p(value) / Math.log1p(maxLines)) * (height - 8)
-      const additionsHeight = scale(bucket.additions)
-      const deletionsHeight = scale(bucket.deletions)
+      // Bar height is log-scaled (one huge day would otherwise flatten every
+      // other bar), but the pink/cyan split inside each bar stays linear so
+      // the added/deleted ratio reads true.
+      const barHeight = (Math.log1p(total) / Math.log1p(maxLines)) * (height - 8)
+      const deletionsHeight = barHeight * (bucket.deletions / total)
+      const barPixelWidth = Math.max(barWidth - 1, 1)
 
       // Bars ahead of the scan bar sit dim; they light up as it passes.
       const lit = Math.min(Math.max((scanX - x) / fadeWidth, 0), 1)
       ctx.globalAlpha = 0.12 + 0.88 * lit
 
       ctx.fillStyle = "#f472b6"
-      ctx.fillRect(x, height - additionsHeight, Math.max(barWidth - 1, 1), additionsHeight)
+      ctx.fillRect(x, height - barHeight, barPixelWidth, barHeight - deletionsHeight)
       ctx.fillStyle = "#22d3ee"
-      ctx.fillRect(x, height - deletionsHeight, Math.max((barWidth - 1) / 2, 1), deletionsHeight)
+      ctx.fillRect(x, height - deletionsHeight, barPixelWidth, deletionsHeight)
       ctx.globalAlpha = 1
     })
 
