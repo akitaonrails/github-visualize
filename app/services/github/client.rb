@@ -73,6 +73,30 @@ module Github
       { description: description, default_branch: default_branch, commits: commits.first(max_commits) }
     end
 
+    # Repos owned by the token's user (public and private), most recently
+    # pushed first. Used for the add-repository autocomplete.
+    def user_repositories(max_repos: 300)
+      repos = []
+      page = 1
+
+      while repos.size < max_repos
+        body = rest_get("/user/repos?per_page=#{PAGE_SIZE}&page=#{page}&affiliation=owner&sort=pushed")
+        break if body.empty?
+
+        repos.concat(body.map do |repo|
+          {
+            full_name: repo["full_name"],
+            description: repo["description"],
+            private: repo["private"]
+          }
+        end)
+        break if body.size < PAGE_SIZE
+        page += 1
+      end
+
+      repos.first(max_repos)
+    end
+
     # Returns newest-first workflow runs, capped at +max_runs+.
     def workflow_runs(owner, name, max_runs: 300)
       runs = []

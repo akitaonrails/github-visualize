@@ -11,8 +11,10 @@ class RepositoriesController < ApplicationController
     @ci_lanes = Visualizations::CiLanes.new(@repository, window_days: @window_days).to_h
   end
 
+  # Bare names are scoped to GITHUB_OWNER; "owner/name" still works.
   def create
-    owner, name = params.expect(:full_name).split("/", 2)
+    input = params.expect(:full_name).strip
+    owner, name = input.include?("/") ? input.split("/", 2) : [ ENV["GITHUB_OWNER"], input ]
     repository = Repository.new(owner: owner&.strip, name: name&.strip)
 
     if repository.save

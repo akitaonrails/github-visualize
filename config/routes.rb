@@ -6,6 +6,7 @@ Rails.application.routes.draw do
   root "dashboard#index"
 
   resources :repositories, only: :create
+  resources :suggestions, only: :index
 
   # Repository names may contain dots, so formats are disabled on these routes.
   scope "repos/:owner/:name", format: false do

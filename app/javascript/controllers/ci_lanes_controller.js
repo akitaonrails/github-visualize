@@ -22,7 +22,7 @@ export default class extends Controller {
   // Defer the replay until the chart scrolls into view.
   playWhenVisible() {
     this.observer = new IntersectionObserver((entries) => {
-      if (entries.some((entry) => entry.isIntersecting)) {
+      if (entries.some((entry) => entry.intersectionRatio >= 0.2)) {
         this.observer.disconnect()
         this.replay()
       }

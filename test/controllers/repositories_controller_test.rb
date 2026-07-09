@@ -38,6 +38,18 @@ class RepositoriesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to repository_url(owner: "akitaonrails", name: "easy-ffmpeg")
   end
 
+  test "create scopes bare names to GITHUB_OWNER" do
+    ENV["GITHUB_OWNER"] = "akitaonrails"
+
+    assert_difference "Repository.count", 1 do
+      post repositories_url, params: { full_name: "easy-subtitle" }
+    end
+
+    assert_redirected_to repository_url(owner: "akitaonrails", name: "easy-subtitle")
+  ensure
+    ENV.delete("GITHUB_OWNER")
+  end
+
   test "create rejects malformed names" do
     assert_no_difference "Repository.count" do
       post repositories_url, params: { full_name: "not-a-full-name" }

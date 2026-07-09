@@ -25,6 +25,8 @@ services:
     environment:
       - SOLID_QUEUE_IN_PUMA=1
       - APP_TIME_ZONE=America/Sao_Paulo
+      # Bare repo names in the add form are scoped to this owner
+      - GITHUB_OWNER=${GITHUB_OWNER:-akitaonrails}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/up"]
       interval: 30s

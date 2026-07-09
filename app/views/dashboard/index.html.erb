@@ -6,10 +6,19 @@
     <h1 class="text-4xl font-bold text-neutral-50"><%= @repositories.size %> <span class="text-neutral-500 text-2xl">repos</span></h1>
   </div>
 
-  <%= form_with url: repositories_path, method: :post, class: "flex gap-2" do |form| %>
-    <%= form.text_field :full_name, placeholder: "owner/repository",
-          class: "bg-neutral-900 border border-neutral-700 rounded px-3 py-2 text-sm w-64
-                  placeholder-neutral-600 focus:outline-none focus:border-fuchsia-500" %>
+  <%= form_with url: repositories_path, method: :post, class: "flex gap-2 items-start" do |form| %>
+    <div class="relative" data-controller="autocomplete" data-autocomplete-url-value="<%= suggestions_path %>">
+      <%= form.text_field :full_name,
+            placeholder: ENV["GITHUB_OWNER"].present? ? "repository (or owner/repo)" : "owner/repository",
+            autocomplete: "off",
+            data: { autocomplete_target: "input",
+                    action: "input->autocomplete#search focus->autocomplete#search keydown->autocomplete#navigate" },
+            class: "bg-neutral-900 border border-neutral-700 rounded px-3 py-2 text-sm w-64
+                    placeholder-neutral-600 focus:outline-none focus:border-fuchsia-500" %>
+      <div data-autocomplete-target="list"
+           class="hidden absolute z-10 mt-1 w-96 max-h-80 overflow-y-auto text-sm
+                  bg-neutral-900 border border-neutral-700 rounded shadow-xl shadow-black/50"></div>
+    </div>
     <%= form.submit "add + sync",
           class: "bg-fuchsia-700 hover:bg-fuchsia-600 text-white text-sm rounded px-4 py-2 cursor-pointer" %>
   <% end %>

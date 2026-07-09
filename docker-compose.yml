@@ -36,6 +36,9 @@ services:
 
       # Optional: timezone used to bucket the charts by day/hour
       - APP_TIME_ZONE=${APP_TIME_ZONE:-America/Sao_Paulo}
+
+      # Optional: bare repo names in the add form are scoped to this owner
+      - GITHUB_OWNER=${GITHUB_OWNER:-}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/up"]
       interval: 30s
