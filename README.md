@@ -24,8 +24,9 @@ For each monitored repository you get:
   ![CI race to green](docs/screenshots/ci-race.png)
 
 - **Dashboard overview** — commits-per-repo bars, sortable repo cards with
-  daily activity chips, live sync status, and latest CI state; new repos are
-  added in place with typeahead autocomplete.
+  daily activity chips, live sync status, and latest CI state; a filter box
+  narrows the cards, and new repos are added in place with typeahead
+  autocomplete over every repo you can reach (your account and your orgs).
 
   ![Dashboard](docs/screenshots/dashboard.png)
 

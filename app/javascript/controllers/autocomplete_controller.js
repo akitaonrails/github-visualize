@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 // Typeahead for the add-repository field, backed by /suggestions
-// (the GitHub repos of the configured owner, minus already-monitored ones).
+// (the GitHub repos you can reach — incl. your orgs — minus monitored ones).
 export default class extends Controller {
   static targets = ["input", "list"]
   static values = { url: String }

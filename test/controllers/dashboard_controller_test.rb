@@ -68,6 +68,15 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_no_match(/\(akitaonrails\)/, response.body)
   end
 
+  test "index renders a client-side filter over the repo cards" do
+    get root_url
+
+    assert_select "[data-controller='repo-filter']"
+    assert_select "input[data-repo-filter-target='field']"
+    assert_select "[data-repo-filter-target='item']", count: 2
+    assert_match 'data-repo-name="akitaonrails/ai-memory"', response.body
+  end
+
   test "index renders empty state without repositories" do
     Repository.destroy_all
     get root_url

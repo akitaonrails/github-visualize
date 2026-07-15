@@ -11,6 +11,10 @@ module Github
 
     API_HOST = "api.github.com".freeze
     PAGE_SIZE = 100
+    # Which repos /user/repos returns for the add-repo autocomplete: everything
+    # the token can reach — personally owned, collaborations, and organization
+    # membership — so repos in your orgs are discoverable, not just owned ones.
+    REPO_AFFILIATION = "owner,collaborator,organization_member".freeze
 
     HISTORY_QUERY = <<~GRAPHQL.freeze
       query($owner: String!, $name: String!, $since: GitTimestamp, $cursor: String, $pageSize: Int!) {
@@ -78,14 +82,14 @@ module Github
       rest_get("/user")["login"]
     end
 
-    # Repos owned by the token's user (public and private), most recently
-    # pushed first. Used for the add-repository autocomplete.
+    # Repos the token's user can reach (see REPO_AFFILIATION; public and
+    # private), most recently pushed first. Used for the add-repo autocomplete.
     def user_repositories(max_repos: 300)
       repos = []
       page = 1
 
       while repos.size < max_repos
-        body = rest_get("/user/repos?per_page=#{PAGE_SIZE}&page=#{page}&affiliation=owner&sort=pushed")
+        body = rest_get("/user/repos?per_page=#{PAGE_SIZE}&page=#{page}&affiliation=#{REPO_AFFILIATION}&sort=pushed")
         break if body.empty?
 
         repos.concat(body.map do |repo|
