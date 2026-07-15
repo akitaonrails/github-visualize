@@ -76,18 +76,19 @@ module Github
       assert_equal Time.utc(2026, 7, 1, 12, 5), runs.first[:run_started_at]
     end
 
-    test "user_repositories maps owned repos" do
+    test "user_repositories spans owned, collaborator and org repos" do
       stub_request(:get, %r{https://api\.github\.com/user/repos})
-        .with(query: hash_including("affiliation" => "owner"))
+        .with(query: hash_including("affiliation" => "owner,collaborator,organization_member"))
         .to_return(status: 200, headers: github_headers, body: [
           { full_name: "akitaonrails/ai-memory", description: "memory", private: false },
-          { full_name: "akitaonrails/secret", description: nil, private: true }
+          { full_name: "BLUE3-ISP/secret", description: nil, private: true }
         ].to_json)
 
       repos = @client.user_repositories
 
       assert_equal 2, repos.size
       assert_equal "akitaonrails/ai-memory", repos.first[:full_name]
+      assert_equal "BLUE3-ISP/secret", repos.last[:full_name]
       assert repos.last[:private]
     end
 
